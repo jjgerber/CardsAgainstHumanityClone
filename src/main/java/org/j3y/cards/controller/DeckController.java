@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 
 @RestController
-@RequestMapping
+@RequestMapping(path = "/v1/deck")
 public class DeckController {
 
     DeckService deckService;
@@ -22,7 +22,7 @@ public class DeckController {
         this.deckService = deckService;
     }
 
-    @GetMapping(value = "/v1/deck/{uuid}", produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "/{uuid}", produces = MediaType.APPLICATION_JSON_VALUE)
     public CardDeck getDeck(@PathVariable String uuid) {
         return deckService.getDeckById(uuid);
     }

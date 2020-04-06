@@ -7,7 +7,7 @@ public class GameConfig {
     private Integer turnTimeout;
     private Integer maxPlayers;
     private Integer maxScore;
-    private Integer winningWaitTimeMillis;
+    private Integer winningWaitTimeSeconds;
 
     public List<String> getDeckIds() {
         return deckIds;
@@ -41,11 +41,11 @@ public class GameConfig {
         this.maxScore = maxScore;
     }
 
-    public Integer getWinningWaitTimeMillis() {
-        return winningWaitTimeMillis;
+    public Integer getWinningWaitTimeSeconds() {
+        return winningWaitTimeSeconds;
     }
 
-    public void setWinningWaitTimeMillis(Integer winningWaitTimeMillis) {
-        this.winningWaitTimeMillis = winningWaitTimeMillis;
+    public void setWinningWaitTimeSeconds(Integer winningWaitTimeSeconds) {
+        this.winningWaitTimeSeconds = winningWaitTimeSeconds;
     }
 }

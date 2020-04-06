@@ -1,39 +1,41 @@
 package org.j3y.cards.model.gameplay;
 
-import org.j3y.cards.exception.InvalidActionException;
-import org.j3y.cards.exception.WrongGameStateException;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import org.apache.commons.collections4.BidiMap;
+import org.apache.commons.collections4.bidimap.DualHashBidiMap;
 import org.j3y.cards.model.GameConfig;
 
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.Semaphore;
 
 public class Game {
     private String name;
+    private Player owner;
     private Set<Card> cardSet;
     private Set<Phrase> phraseSet;
-    private List<Player> playerList;
+    private List<Player> players;
     private GameConfig gameConfig;
 
     // Stateful stuff
-    private Semaphore mutex;
+    @JsonIgnore private Semaphore mutex;
     private Player judgingPlayer;
     private Card currentCard;
 
     private GameState gameState;
-    private Long gameStateUnixTime;
+    private LocalDateTime gameStateTime;
 
-    private Map<Player, Integer> playerPhraseSelectionIndexMap;
+    @JsonIgnore private BidiMap<Player, Integer> playerPhraseSelectionIndexMap;
     private List<List<Phrase>> phraseSelections;
-    private Map<Player, Integer> scores;
-    private Map<Player, Integer> votes;
+
+    private Integer judgeChoiceWinner;
+    private Player lastWinningPlayer;
 
     public Game() {
         super();
         this.mutex = new Semaphore(1);
-        this.playerPhraseSelectionIndexMap = new HashMap<>();
+        this.playerPhraseSelectionIndexMap = new DualHashBidiMap<>();
         this.phraseSelections = new ArrayList<>();
-        this.scores = new HashMap<>();
-        this.votes = new HashMap<>();
         this.setGameState(GameState.LOBBY);
     }
 
@@ -43,6 +45,14 @@ public class Game {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public Player getOwner() {
+        return owner;
+    }
+
+    public void setOwner(Player owner) {
+        this.owner = owner;
     }
 
     public Set<Card> getCardSet() {
@@ -61,12 +71,12 @@ public class Game {
         this.currentCard = currentCard;
     }
 
-    public List<Player> getPlayerList() {
-        return playerList;
+    public List<Player> getPlayers() {
+        return players;
     }
 
-    public void setPlayerList(List<Player> playerList) {
-        this.playerList = playerList;
+    public void setPlayers(List<Player> players) {
+        this.players = players;
     }
 
     public Player getJudgingPlayer() {
@@ -91,11 +101,11 @@ public class Game {
 
     public void setGameState(GameState gameState) {
         this.gameState = gameState;
-        this.gameStateUnixTime = System.currentTimeMillis();
+        this.gameStateTime = LocalDateTime.now();
     }
 
-    public Long getGameStateUnixTime() {
-        return gameStateUnixTime;
+    public LocalDateTime getGameStateTime() {
+        return gameStateTime;
     }
 
     public GameConfig getGameConfig() {
@@ -110,28 +120,12 @@ public class Game {
         return mutex;
     }
 
-    public Map<Player, Integer> getScores() {
-        return scores;
-    }
-
-    public void setScores(Map<Player, Integer> scores) {
-        this.scores = scores;
-    }
-
-    public Map<Player, Integer> getVotes() {
-        return votes;
-    }
-
-    public void setVotes(Map<Player, Integer> votes) {
-        this.votes = votes;
-    }
-
     public Map<Player, Integer> getPlayerPhraseSelectionIndexMap() {
         return playerPhraseSelectionIndexMap;
     }
 
-    public void setPlayerPhraseSelectionIndexMap(Map<Player, Integer> playerPhraseSelectionIndexMap) {
-        this.playerPhraseSelectionIndexMap = playerPhraseSelectionIndexMap;
+    public void resetPlayerPhraseSelections() {
+        this.playerPhraseSelectionIndexMap.clear();
     }
 
     public List<List<Phrase>> getPhraseSelections() {
@@ -142,84 +136,76 @@ public class Game {
         this.phraseSelections = phraseSelections;
     }
 
+    public Player getLastWinningPlayer() {
+        return lastWinningPlayer;
+    }
+
+    public void setLastWinningPlayer(Player lastWinningPlayer) {
+        this.lastWinningPlayer = lastWinningPlayer;
+    }
+
+    public Integer getJudgeChoiceWinner() {
+        return judgeChoiceWinner;
+    }
+
+    public void setJudgeChoiceWinner(Integer judgeChoiceWinner) {
+        this.judgeChoiceWinner = judgeChoiceWinner;
+    }
+
     public Boolean hasPlayerSelected(Player player) {
-        return playerPhraseSelectionIndexMap.keySet().contains(player);
+        return playerPhraseSelectionIndexMap.containsKey(player);
     }
 
     public Boolean haveAllPlayersSelected() {
-       return playerList.size() == phraseSelections.size();
+       return players.size() == phraseSelections.size();
     }
 
-    public Boolean haveAllPlayersVoted() {
-        return playerList.size() == votes.size();
-    }
-
-    public Boolean hasPlayerVoted(Player player) {
-        return votes.keySet().contains(player);
-    }
-
-    public Boolean isPhraseUpForVote(Integer voteIndex) {
+    public boolean isPhraseUpForVote(Integer voteIndex) {
         return phraseSelections.get(voteIndex) != null;
     }
 
-    public Boolean hasPhrases(Collection<Phrase> phrases) {
+    public boolean hasPhrases(Collection<Phrase> phrases) {
         return phraseSet.containsAll(phrases);
     }
 
-    public Boolean hasPlayer(Player player) {
-        return playerList.contains(player);
+    public boolean hasPlayer(Player player) {
+        return players.contains(player);
     }
 
-    public Boolean isGameFull() {
-        return playerList.size() >= gameConfig.getMaxPlayers();
+    public boolean hasGameWinner() {
+        return gameConfig.getMaxScore() == getTopScore();
     }
 
-    public List<Player> getTopVotesPlayers() {
-        List<Player> topVotedPlayers = new ArrayList<>();
-        Integer topNumVotes = 0;
-        Map.Entry<Player, Integer> topPlayerScore = null;
-        for (Map.Entry<Player, Integer> playerVotes : votes.entrySet()) {
-            Integer numVotes = playerVotes.getValue();
-            if (numVotes.compareTo(topNumVotes) == 0) {
-                topVotedPlayers.add(playerVotes.getKey());
-            } else if (numVotes.compareTo(topNumVotes) > 0) {
-                topNumVotes = numVotes;
-                topVotedPlayers.clear();
-                topVotedPlayers.add(playerVotes.getKey());
-            }
+    public Player getRoundWinner() {
+        if (judgeChoiceWinner == null) {
+            return null;
         }
 
-        return topVotedPlayers;
+        return playerPhraseSelectionIndexMap.inverseBidiMap().get(judgeChoiceWinner);
     }
 
-    public Map.Entry<Player, Integer> getTopScore() {
-        Integer maxScore = 0;
-        Map.Entry<Player, Integer> topPlayerScore = null;
-        for (Map.Entry<Player, Integer> playerScore : scores.entrySet()) {
-            if (playerScore.getValue() > maxScore) {
-                maxScore = playerScore.getValue();
-                topPlayerScore = playerScore;
-            }
+    public Player getGameWinner() {
+        int topScore = getTopScore();
+
+        if (topScore != gameConfig.getMaxScore()) {
+            return null;
         }
 
-        return topPlayerScore;
+        return players.stream()
+                .filter(player -> player.getScore() == topScore)
+                .findFirst()
+                .orElse(null);
     }
 
-    public void increasePlayerScore(Player player) {
-        Integer score = scores.get(player);
+    public boolean isGameFull() {
+        return players.size() >= gameConfig.getMaxPlayers();
+    }
 
-        if (score == null) {
-            score = 1;
-        } else {
-            score = score + 1;
-        }
-
-        scores.put(player, score);
-
-        // Check if max score was reached.
-        if (score >= gameConfig.getMaxScore()) {
-            setGameState(GameState.WINNER);
-        }
+    public int getTopScore() {
+        return players.stream()
+                .map(Player::getScore).mapToInt(v -> v)
+                .max()
+                .orElse(0);
     }
 
 }

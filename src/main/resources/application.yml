@@ -1,6 +1,6 @@
-auth:
-  login-uri: /login.html
-  redirect-uri: /v1/game.html
+game:
+  winner-timeout: 15000
+  game-over-timeout: 30000
 
 ###
 #   Database Settings
@@ -32,3 +32,8 @@ spring:
       settings:
         trace: false
         web-allow-others: false
+
+  output:
+    ansi:
+      enabled: ALWAYS
+

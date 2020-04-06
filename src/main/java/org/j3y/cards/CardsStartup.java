@@ -11,6 +11,8 @@ import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.ApplicationListener;
 import org.springframework.stereotype.Component;
 
+import java.util.UUID;
+
 @Component
 public class CardsStartup implements ApplicationListener<ApplicationReadyEvent> {
 
@@ -30,6 +32,7 @@ public class CardsStartup implements ApplicationListener<ApplicationReadyEvent> 
     @Override
     public void onApplicationEvent(ApplicationReadyEvent event) {
         CardDeck deck = new CardDeck();
+        deck.setUuid(UUID.randomUUID().toString());
         deck.setDeckName("Derp Deck");
         deck = deckRepository.save(deck);
 
@@ -135,7 +138,6 @@ public class CardsStartup implements ApplicationListener<ApplicationReadyEvent> 
         phraseRepository.save(phrase);
 
         System.out.println("Saved Deck ID: " + deck.getUuid());
-
 
     }
 }

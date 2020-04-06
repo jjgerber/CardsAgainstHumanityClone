@@ -1,15 +1,13 @@
 package org.j3y.cards.model.gameplay;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import org.hibernate.annotations.GenericGenerator;
 
 import javax.persistence.*;
+import java.util.UUID;
 
 @Entity
 public class Phrase {
     @Id
-    @GeneratedValue(generator = "system-uuid")
-    @GenericGenerator(name = "system-uuid", strategy="uuid")
     private String uuid;
 
     private String text;
@@ -18,6 +16,10 @@ public class Phrase {
     @JoinColumn(name = "deckId")
     @JsonIgnore
     private CardDeck owningDeck;
+
+    public Phrase() {
+        this.uuid = UUID.randomUUID().toString();
+    }
 
     public String getUuid() {
         return uuid;

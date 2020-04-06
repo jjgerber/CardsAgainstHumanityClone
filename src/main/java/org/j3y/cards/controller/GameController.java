@@ -1,52 +1,55 @@
 package org.j3y.cards.controller;
 
-import org.j3y.cards.model.gameplay.CardDeck;
+import org.j3y.cards.exception.InvalidActionException;
+import org.j3y.cards.model.GameConfig;
 import org.j3y.cards.model.gameplay.Game;
 import org.j3y.cards.model.gameplay.Player;
-import org.j3y.cards.model.GameConfig;
 import org.j3y.cards.response.GameSummary;
-import org.j3y.cards.service.DeckService;
 import org.j3y.cards.service.GameService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
+import springfox.documentation.annotations.ApiIgnore;
 
-import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpSession;
 import java.util.List;
-import java.util.Set;
 
 
 @RestController
-@RequestMapping
+@RequestMapping(path = "/v1/games")
 public class GameController {
 
-    private GameService gameService;
-    private DeckService deckService;
+    private final GameService gameService;
 
     @Autowired
-    public GameController(GameService gameService,
-                          DeckService deckService) {
+    public GameController(final GameService gameService) {
         this.gameService = gameService;
-        this.deckService = deckService;
     }
 
-    @GetMapping(value = "/v1/game/{name}", produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "/{name}", produces = MediaType.APPLICATION_JSON_VALUE)
     public Game getGame(@PathVariable String name) throws InterruptedException {
         return gameService.getGameByName(name);
     }
 
-    @GetMapping(value = "/v1/games", produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "/all", produces = MediaType.APPLICATION_JSON_VALUE)
     public List<GameSummary> getAllGameNames() {
         return gameService.getAllGames();
     }
 
-    @PostMapping(value = "/v1/game/{name}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public Game createGame(@PathVariable String name,
-                           @RequestBody GameConfig gameConfig,
-                           HttpServletRequest request) {
+    @PostMapping(value = "/{name}", produces = MediaType.APPLICATION_JSON_VALUE)
+    public Game createGame(@PathVariable String name, @RequestBody GameConfig gameConfig, @ApiIgnore HttpSession session) throws InterruptedException {
+        Player player = (Player) session.getAttribute("player");
+        return gameService.createGame(name, player, gameConfig);
+    }
 
-        Player player = (Player) request.getSession().getAttribute("player");
-        Set<CardDeck> deckSet = deckService.getDecksById(gameConfig.getDeckIds());
-        return gameService.createGame(name, player, deckSet, gameConfig);
+    @PostMapping(value = "/{name}/start", produces = MediaType.APPLICATION_JSON_VALUE)
+    public Game startGame(@PathVariable String name, @ApiIgnore HttpSession session) throws InterruptedException {
+        Player player = (Player) session.getAttribute("player");
+        Game game = gameService.getGameByName(name);
+
+        if (game == null) {
+            throw new InvalidActionException("That game does not exist.");
+        }
+        return gameService.startGame(game, player);
     }
 }

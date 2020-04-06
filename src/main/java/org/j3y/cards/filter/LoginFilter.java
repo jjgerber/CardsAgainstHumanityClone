@@ -1,6 +1,6 @@
 package org.j3y.cards.filter;
 
-import org.springframework.beans.factory.annotation.Value;
+import org.j3y.cards.model.gameplay.Player;
 import org.springframework.web.filter.GenericFilterBean;
 
 import javax.servlet.FilterChain;
@@ -12,12 +12,11 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import java.io.IOException;
+import java.util.Random;
+import java.util.UUID;
 
-@WebFilter({"/v1/*"})
+@WebFilter({"/*"})
 public class LoginFilter extends GenericFilterBean {
-
-    @Value("${auth.login-uri}")
-    private String loginUrl;
 
     @Override
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
@@ -28,9 +27,13 @@ public class LoginFilter extends GenericFilterBean {
         Object playerObj = session.getAttribute("player");
 
         if (playerObj == null) {
-            httpResponse.sendRedirect(loginUrl);
+            Player player = new Player();
+            player.setName("Player " + new Random().nextInt(99999));
+            player.setPlayerId(UUID.randomUUID().toString());
+            session.setAttribute("player", player);
         }
 
         chain.doFilter(request,response);
     }
+
 }
