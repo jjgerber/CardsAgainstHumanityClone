@@ -4,5 +4,8 @@ module.exports = {
   },
   publicPath: '/',
   outputDir: '../cards-backend/src/main/webapp/',
-  assetsDir: ''
-};
+  assetsDir: '',
+  transpileDependencies: [
+    'vuetify'
+  ]
+}
