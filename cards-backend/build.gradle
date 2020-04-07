@@ -1,0 +1,25 @@
+apply plugin: 'java'
+apply plugin: 'war'
+apply plugin: 'org.springframework.boot'
+apply plugin: 'io.spring.dependency-management'
+
+group = 'org.j3y'
+version = '0.0.1-SNAPSHOT'
+sourceCompatibility = 1.8
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+	implementation 'org.apache.commons:commons-collections4:4.+'
+	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+	implementation 'org.springframework.boot:spring-boot-starter-web'
+	implementation 'io.springfox:springfox-swagger2:+'
+
+    runtime 'com.h2database:h2:1.4.197'
+	runtime 'javax.xml.bind:jaxb-api:2.3.+'
+    runtime 'io.springfox:springfox-swagger-ui:+'
+
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+}

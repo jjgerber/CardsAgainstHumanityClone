@@ -1,1 +1,4 @@
 rootProject.name = 'cards'
+
+include ':cards-backend'
+include ':cards-ui'
