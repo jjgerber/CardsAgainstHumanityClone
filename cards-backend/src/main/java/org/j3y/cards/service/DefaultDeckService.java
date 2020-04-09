@@ -5,10 +5,8 @@ import org.j3y.cards.repository.DeckRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.Collection;
-import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 @Service
 public class DefaultDeckService implements DeckService {
@@ -28,8 +26,12 @@ public class DefaultDeckService implements DeckService {
     }
 
     @Override
-    public Set<CardDeck> getDecksById(Iterable<String> uuids) {
-        Iterable<CardDeck> cardDecks = deckRepository.findAllById(uuids);
-        return new HashSet<>((Collection<CardDeck>) cardDecks);
+    public List<CardDeck> getDecksById(Iterable<String> uuids) {
+        return deckRepository.findAllById(uuids);
+    }
+
+    @Override
+    public List<CardDeck> getAllDecks() {
+        return deckRepository.findAll();
     }
 }

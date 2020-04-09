@@ -1,5 +1,8 @@
 package org.j3y.cards.model.gameplay;
 
+import com.fasterxml.jackson.annotation.JsonView;
+import org.j3y.cards.model.Views;
+
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;
 import javax.persistence.Id;
@@ -10,13 +13,17 @@ import java.util.Set;
 public class CardDeck {
 
     @Id
+    @JsonView(Views.Limited.class)
     private String uuid;
 
+    @JsonView(Views.Limited.class)
     private String deckName;
 
+    @JsonView(Views.Full.class)
     @OneToMany(mappedBy = "owningDeck", cascade = CascadeType.ALL)
     private Set<Card> cardSet;
 
+    @JsonView(Views.Full.class)
     @OneToMany(mappedBy = "owningDeck", cascade = CascadeType.ALL)
     private Set<Phrase> phraseSet;
 

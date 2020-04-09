@@ -1,9 +1,9 @@
 package org.j3y.cards.repository;
 
 import org.j3y.cards.model.gameplay.Phrase;
-import org.springframework.data.repository.CrudRepository;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface PhraseRepository extends CrudRepository<Phrase, String> {
+public interface PhraseRepository extends JpaRepository<Phrase, String> {
 }

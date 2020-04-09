@@ -31,9 +31,19 @@ public class CardsStartup implements ApplicationListener<ApplicationReadyEvent> 
 
     @Override
     public void onApplicationEvent(ApplicationReadyEvent event) {
+        createDeck("Main Deck");
+        createDeck("Bonus Deck");
+        createDeck("2020 Deck");
+        createDeck("Coronavirus Deck");
+        createDeck("Politics Deck");
+        createDeck("Tiger King Deck");
+        createDeck("Game of Thrones Deck");
+    }
+
+    private void createDeck(String deckName) {
         CardDeck deck = new CardDeck();
         deck.setUuid(UUID.randomUUID().toString());
-        deck.setDeckName("Derp Deck");
+        deck.setDeckName(deckName);
         deck = deckRepository.save(deck);
 
         Card card = new Card();
@@ -138,6 +148,5 @@ public class CardsStartup implements ApplicationListener<ApplicationReadyEvent> 
         phraseRepository.save(phrase);
 
         System.out.println("Saved Deck ID: " + deck.getUuid());
-
     }
 }

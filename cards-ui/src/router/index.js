@@ -1,16 +1,23 @@
 import Vue from 'vue'
 import VueRouter from 'vue-router'
-import Lobby from '../views/Lobby.vue'
+import Lobbies from '../views/Lobbies.vue'
+import Game from '../views/Game.vue'
 import Settings from '@/views/Settings.vue'
 import About from '@/views/About.vue'
+import CreateLobby from '@/views/CreateGame.vue'
 
 Vue.use(VueRouter)
 
 const routes = [
   {
     path: '/',
-    name: 'Lobby',
-    component: Lobby
+    name: 'Lobbies',
+    component: Lobbies
+  },
+  {
+    path: '/game/:name',
+    name: 'Game',
+    component: Game
   },
   {
     path: '/settings',
@@ -21,6 +28,11 @@ const routes = [
     path: '/about',
     name: 'About',
     component: About
+  },
+  {
+    path: '/create-lobby',
+    name: 'Create Lobby',
+    component: CreateLobby
   }
 ]
 

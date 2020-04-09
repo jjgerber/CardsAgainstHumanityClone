@@ -1,35 +1,39 @@
 package org.j3y.cards.model.gameplay;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonView;
 import org.apache.commons.collections4.BidiMap;
 import org.apache.commons.collections4.bidimap.DualHashBidiMap;
 import org.j3y.cards.model.GameConfig;
+import org.j3y.cards.model.Views;
 
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.Semaphore;
 
 public class Game {
-    private String name;
-    private Player owner;
-    private Set<Card> cardSet;
-    private Set<Phrase> phraseSet;
-    private List<Player> players;
-    private GameConfig gameConfig;
+    @JsonView(Views.Limited.class) private String name;
+    @JsonView(Views.Limited.class) private Player owner;
+    @JsonIgnore private Set<Card> cardSet;
+    @JsonIgnore private Set<Phrase> phraseSet;
+
+    @JsonView(Views.Full.class) private List<Player> players;
+
+    @JsonView(Views.Limited.class) private GameConfig gameConfig;
 
     // Stateful stuff
     @JsonIgnore private Semaphore mutex;
-    private Player judgingPlayer;
-    private Card currentCard;
+    @JsonView(Views.Full.class) private Player judgingPlayer;
+    @JsonView(Views.Full.class) private Card currentCard;
 
-    private GameState gameState;
-    private LocalDateTime gameStateTime;
+    @JsonView(Views.Limited.class) private GameState gameState;
+    @JsonView(Views.Limited.class) private LocalDateTime gameStateTime;
 
     @JsonIgnore private BidiMap<Player, Integer> playerPhraseSelectionIndexMap;
-    private List<List<Phrase>> phraseSelections;
+    @JsonView(Views.Full.class) private List<List<Phrase>> phraseSelections;
 
-    private Integer judgeChoiceWinner;
-    private Player lastWinningPlayer;
+    @JsonView(Views.Full.class) private Integer judgeChoiceWinner;
+    @JsonView(Views.Full.class) private Player lastWinningPlayer;
 
     public Game() {
         super();
@@ -74,6 +78,9 @@ public class Game {
     public List<Player> getPlayers() {
         return players;
     }
+
+    @JsonView(Views.Limited.class)
+    public int getNumPlayers() { return players == null ? 0 : players.size(); }
 
     public void setPlayers(List<Player> players) {
         this.players = players;
@@ -202,6 +209,8 @@ public class Game {
     }
 
     public int getTopScore() {
+        if (players == null) return 0;
+
         return players.stream()
                 .map(Player::getScore).mapToInt(v -> v)
                 .max()

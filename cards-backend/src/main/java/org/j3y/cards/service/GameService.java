@@ -4,13 +4,12 @@ import org.j3y.cards.model.GameConfig;
 import org.j3y.cards.model.gameplay.Game;
 import org.j3y.cards.model.gameplay.Phrase;
 import org.j3y.cards.model.gameplay.Player;
-import org.j3y.cards.response.GameSummary;
 
 import java.util.List;
 
 public interface GameService {
     Game getGameByName(String name) throws InterruptedException;
-    List<GameSummary> getAllGames();
+    List<Game> getAllGames();
 
     Game createGame(String name, Player owner, GameConfig gameConfig) throws InterruptedException;
     Game startGame(Game game, Player requestingPlayer) throws InterruptedException;

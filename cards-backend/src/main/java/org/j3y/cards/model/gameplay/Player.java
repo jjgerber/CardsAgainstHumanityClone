@@ -1,16 +1,26 @@
 package org.j3y.cards.model.gameplay;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonView;
+import org.j3y.cards.model.Views;
 
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.Semaphore;
 
 public class Player {
+    @JsonView(Views.Limited.class)
     private String playerId;
+
+    @JsonView(Views.Limited.class)
     private String name;
+
     @JsonIgnore private Game currentGame;
+
+    @JsonView(Views.LoggedInUser.class)
     private Set<Phrase> phrases;
+
+    @JsonView(Views.Limited.class)
     private int score;
 
     @JsonIgnore private Semaphore mutex;

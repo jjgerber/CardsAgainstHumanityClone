@@ -2,6 +2,11 @@ game:
   winner-timeout: 15000
   game-over-timeout: 30000
 
+server:
+  servlet:
+    session:
+      timeout: -1
+
 ###
 #   Database Settings
 ###

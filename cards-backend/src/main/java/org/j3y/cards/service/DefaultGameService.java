@@ -1,17 +1,22 @@
 package org.j3y.cards.service;
 
+import com.fasterxml.jackson.annotation.JsonView;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.j3y.cards.exception.GameAlreadyExistsException;
 import org.j3y.cards.exception.InvalidActionException;
 import org.j3y.cards.exception.WrongGameStateException;
 import org.j3y.cards.model.GameConfig;
+import org.j3y.cards.model.Views;
 import org.j3y.cards.model.gameplay.*;
-import org.j3y.cards.response.GameSummary;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class DefaultGameService implements GameService {
@@ -21,12 +26,21 @@ public class DefaultGameService implements GameService {
     private final Map<String, Game> gameMap;
     private final GameStateTimeoutService gameStateTimeoutService;
     private final DeckService deckService;
+    private final SimpMessagingTemplate simpTemplate;
+    private final ObjectMapper mapper;
 
     @Autowired
-    public DefaultGameService(final GameStateTimeoutService gameStateTimeoutService, final DeckService deckService) {
+    public DefaultGameService(
+            final GameStateTimeoutService gameStateTimeoutService,
+            final DeckService deckService,
+            final SimpMessagingTemplate simpTemplate,
+            final ObjectMapper mapper
+    ) {
         gameMap = new HashMap<>();
         this.gameStateTimeoutService = gameStateTimeoutService;
         this.deckService = deckService;
+        this.simpTemplate = simpTemplate;
+        this.mapper = mapper;
     }
 
     @Override
@@ -52,6 +66,12 @@ public class DefaultGameService implements GameService {
         game.setPlayers(players);
         game.setGameConfig(gameConfig);
 
+        List<String> deckNames = deckService.getDecksById(gameConfig.getDeckIds())
+                .stream()
+                .map(CardDeck::getDeckName)
+                .collect(Collectors.toList());
+        game.getGameConfig().setDeckNames(deckNames);
+
         gameMap.put(name, game);
 
         setStateLobby(game);
@@ -59,9 +79,32 @@ public class DefaultGameService implements GameService {
         return game;
     }
 
+    private void sendGameUpdate(Game game) {
+        String gameJson = "{}";
+        try {
+            gameJson = mapper.writerWithView(Views.Full.class).writeValueAsString(game);
+        } catch (JsonProcessingException e) {
+            logger.error("Error converting game to JSON: {}", e.getMessage(), e);
+        }
+        logger.info("Sending Game Update: {}", gameJson);
+        this.simpTemplate.convertAndSend("/topic/game/" + game.getName(), gameJson);
+    }
+
+    @JsonView(Views.Limited.class)
+    private void sendLobbiesUpdate() {
+        String gamesJson = "[]";
+        try {
+            List<Game> games = getAllGames();
+            gamesJson = mapper.writerWithView(Views.Limited.class).writeValueAsString(games);
+        } catch (JsonProcessingException e) {
+            logger.error("Error converting lobby listing to JSON: {}", e.getMessage(), e);
+        }
+        logger.info("Sending Lobby Update: {}", gamesJson);
+        this.simpTemplate.convertAndSend("/topic/lobbies", gamesJson);
+    }
+
     private void populateCardsAndPhrasesByDeckIds(List<String> deckIds, Set<Card> cards, Set<Phrase> phrases) {
-        // Gather all the phrases and cards.
-        Set<CardDeck> deckSet = deckService.getDecksById(deckIds);
+        List<CardDeck> deckSet = deckService.getDecksById(deckIds);
 
         for (CardDeck cardDeck : deckSet) {
             phrases.addAll(cardDeck.getPhraseSet());
@@ -99,6 +142,7 @@ public class DefaultGameService implements GameService {
         }
 
         setStateChoosing(game);
+        sendLobbiesUpdate();
 
         return game;
     }
@@ -205,20 +249,8 @@ public class DefaultGameService implements GameService {
     /* TODO: Move this list into a singleton bean that gets
        TODO: updated on a regular timeschedule by another thread. (Java CRON thingy?) */
     @Override
-    public List<GameSummary> getAllGames() {
-        List<GameSummary> response = new ArrayList<>();
-
-        for (Map.Entry<String, Game> gameEntry : gameMap.entrySet()) {
-            GameSummary gsr = new GameSummary();
-            gsr.setGameName(gameEntry.getKey());
-            gsr.setGameState(gameEntry.getValue().getGameState().toString());
-            gsr.setNumPlayers(gameEntry.getValue().getPlayers().size());
-            gsr.setGameConfig(gameEntry.getValue().getGameConfig());
-
-            response.add(gsr);
-        }
-
-        return response;
+    public List<Game> getAllGames() {
+        return new ArrayList<>(gameMap.values());
     }
 
     private Object getRandomItemFromCollection(Collection objects) {
@@ -366,5 +398,7 @@ public class DefaultGameService implements GameService {
         } finally {
             game.getMutex().release();
         }
+
+        sendLobbiesUpdate();
     }
 }

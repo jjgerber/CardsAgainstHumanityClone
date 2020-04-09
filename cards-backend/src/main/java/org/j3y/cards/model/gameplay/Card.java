@@ -1,7 +1,9 @@
 package org.j3y.cards.model.gameplay;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonView;
 import org.hibernate.annotations.GenericGenerator;
+import org.j3y.cards.model.Views;
 
 import javax.persistence.*;
 
@@ -10,9 +12,14 @@ public class Card {
     @Id
     @GeneratedValue(generator = "system-uuid")
     @GenericGenerator(name = "system-uuid", strategy="uuid")
+    @JsonView(Views.Limited.class)
     private String uuid;
 
+    @JsonView(Views.Limited.class)
     private String text;
+
+    @JsonView(Views.Limited.class)
+    private int numPhrases;
 
     @ManyToOne(cascade = CascadeType.MERGE)
     @JoinColumn(name = "deckId")
@@ -33,6 +40,14 @@ public class Card {
 
     public void setText(String text) {
         this.text = text;
+    }
+
+    public int getNumPhrases() {
+        return numPhrases;
+    }
+
+    public void setNumPhrases(int numPhrases) {
+        this.numPhrases = numPhrases;
     }
 
     public CardDeck getOwningDeck() {

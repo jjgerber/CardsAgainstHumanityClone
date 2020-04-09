@@ -19,7 +19,6 @@ public class ControllerExceptionHandler extends ResponseEntityExceptionHandler {
         ObjectNode responseJson = JsonNodeFactory.instance.objectNode();
         responseJson.put("error", ex.getStatusText());
         responseJson.put("code", ex.getRawStatusCode());
-        String bodyOfResponse = "This should be application specific";
         return handleExceptionInternal(ex, responseJson, new HttpHeaders(), ex.getStatusCode(), request);
     }
 
