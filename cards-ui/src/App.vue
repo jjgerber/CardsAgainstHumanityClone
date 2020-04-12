@@ -1,5 +1,5 @@
 <template>
-  <v-app v-if="ready">
+  <v-app v-if="playerInfoReady && socketReady">
     <v-navigation-drawer
       v-model="drawer"
       app
@@ -45,7 +45,7 @@
       <v-btn icon @click="showSetNameDialog = true">
         <v-icon>mdi-account</v-icon>
       </v-btn>
-      <span class="pa-2">{{ playerInfo.name }}</span>
+      <span class="pa-2">{{ playerInfo.playerName }}</span>
 
     </v-app-bar>
 
@@ -66,7 +66,10 @@
 <script>
 import SetNameDialog from './components/dialogs/SetNameDialog'
 import UserInfoMixin from './mixins/UserInfoMixin'
-import { store } from './store'
+import { store, mutations } from './store'
+import SockJS from "sockjs-client";
+import Stomp from "webstomp-client";
+import Vue from "vue";
 
 export default {
   name: 'App',
@@ -88,15 +91,37 @@ export default {
       { title: 'About', icon: 'mdi-help-box' }
     ],
     right: null,
-    ready: false
+    playerInfoReady: false,
+    socketReady: false,
+    playerInfoSubscription: null
   }),
 
-  created () {
+  mounted () {
     this.retrievePlayerInfo().catch((error) => {
       console.error(error)
     }).finally(() => {
-      this.ready = true
+      this.playerInfoReady = true
     })
+
+    Vue.prototype.$stomp.connect( {}, frame => {
+        this.socketReady = true;
+        console.log(`Connecting to user information ${this.playerInfo.playerName}'s queue.`)
+        this.playerInfoSubscription = this.$stomp.subscribe(`/user/${this.playerInfo.name}/userInfo`, tick => {
+          console.log("Retrieved user info update!");
+          mutations.setPlayerInfo(JSON.parse(tick.body));
+        });
+      },
+      error => {
+        console.error(error);
+        this.socketReady = false;
+      }
+    )
+  },
+
+  destroyed() {
+    if (this.playerInfoSubscription) {
+      this.playerInfoSubscription.disconnect();
+    }
   },
 
   methods: {

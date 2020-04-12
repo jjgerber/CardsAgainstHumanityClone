@@ -30,7 +30,7 @@
           <p>
             Set your desired username:
           </p>
-           <v-text-field v-model="userName" />
+           <v-text-field v-model="userName" @keypress.enter="setNewName" />
         </v-card-text>
 
         <v-divider></v-divider>

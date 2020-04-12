@@ -1,7 +1,6 @@
 <template>
   <v-container>
     <v-row class="text-center">
-
       <v-col class="mb-4">
         <div class="text-left">
           <h1>Lobbies</h1>
@@ -33,7 +32,7 @@
             :sort-by="sortBy"
             no-data-text="No Lobbies Found"
             :sort-desc="[false]"
-            @click:row="handleLobbyClick"
+            @click:row="handleGameClick"
           ></v-data-table>
         </v-card>
       </v-col>
@@ -42,66 +41,57 @@
 </template>
 
 <script>
-import SockJS from 'sockjs-client'
-import Stomp from 'webstomp-client'
+  import LobbyMixin from '../mixins/GamesMixin'
 
-import LobbyMixin from '../mixins/GamesMixin'
+  export default {
+    name: 'HelloWorld',
 
-export default {
-  name: 'HelloWorld',
+    mixins: [
+      LobbyMixin
+    ],
 
-  mixins: [
-    LobbyMixin
-  ],
-
-  data() {
-    return {
-      search: '',
-      lobbyHeaders: [
-        { text: 'Lobby Name', align: 'start', value: 'name' },
-        { text: 'Status', value: 'gameState' },
-        { text: 'Players', value: 'numPlayers' },
-        { text: 'Max Players', value: 'gameConfig.maxPlayers' },
-        { text: 'Decks', value: 'gameConfig.deckNames' }
-      ],
-      sortBy: ['numPlayers'],
-      games: [],
-      connected: false,
-      socket: null
-    }
-  },
-
-  methods: {
-    handleLobbyClick (row) {
-      this.$router.push(`/game/${row.name}`);
+    data() {
+      return {
+        search: '',
+        lobbyHeaders: [
+          { text: 'Lobby Name', align: 'start', value: 'name' },
+          { text: 'Status', value: 'gameState' },
+          { text: 'Players', value: 'numPlayers' },
+          { text: 'Max Players', value: 'gameConfig.maxPlayers' },
+          { text: 'Decks', value: 'gameConfig.deckNames' }
+        ],
+        sortBy: ['numPlayers'],
+        games: [],
+        stompSubscription: null
+      }
     },
 
-    connect() {
-      console.log("CONNECTING TO WEBSOCKET...");
-      //let host = (window.location.protocol + '//' + window.location.host).replace("8081", "8080");
-      this.socket = new SockJS('/socket');
-      this.stompClient = Stomp.over(this.socket);
-      this.stompClient.connect( {}, frame => {
-          this.connected = true;
-          this.stompClient.subscribe('/topic/lobbies', tick => {
-            this.games = JSON.parse(tick.body);
-          })
-        },
-        error => {
-          console.error(error);
-          this.connected = false;
-        }
-      )
-    }
-  },
+    methods: {
+      handleGameClick (row) {
+        this.$router.push(`/game/${row.name}`);
+      },
 
-  mounted () {
-    this.connect();
-    this.getAllLobbies().then((response) => {
-      this.games = response.data;
-    })
+      connect() {
+        this.stompSubscription = this.$stomp.subscribe('/topic/lobbies', tick => {
+          this.games = JSON.parse(tick.body);
+        })
+      }
+    },
+
+    mounted () {
+      this.connect();
+      this.callGetAllLobbies().then((response) => {
+        this.games = response.data;
+      })
+    },
+
+    destroyed() {
+      if (this.stompSubscription) {
+        console.log("Unsubscribing from lobby topic.");
+        this.stompSubscription.unsubscribe();
+      }
+    }
   }
-}
 </script>
 
 <style>

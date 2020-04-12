@@ -3,14 +3,18 @@ package org.j3y.cards.model.gameplay;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonView;
 import org.j3y.cards.model.Views;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.Semaphore;
 
-public class Player {
+public class Player implements Authentication {
     @JsonView(Views.Limited.class)
-    private String playerId;
+    private String playerName;
 
     @JsonView(Views.Limited.class)
     private String name;
@@ -26,26 +30,22 @@ public class Player {
     @JsonIgnore private Semaphore mutex;
 
     public Player() {
-        super();
+        this.name = UUID.randomUUID().toString();
         this.mutex = new Semaphore(1);
         this.phrases = new HashSet<>();
         this.score = 0;
     }
 
-    public String getPlayerId() {
-        return playerId;
+    public String getPlayerName() {
+        return playerName;
     }
 
-    public void setPlayerId(String playerId) {
-        this.playerId = playerId;
+    public void setPlayerName(String playerName) {
+        this.playerName = playerName;
     }
 
     public String getName() {
         return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
     }
 
     public Game getCurrentGame() {
@@ -58,6 +58,11 @@ public class Player {
 
     public void setCurrentGame(Game currentGame) {
         this.currentGame = currentGame;
+    }
+
+    @JsonView(Views.Limited.class)
+    public String getCurrentGameUuid() {
+        return this.currentGame == null ? null : this.currentGame.getUuid();
     }
 
     public Set<Phrase> getPhrases() {
@@ -86,5 +91,40 @@ public class Player {
 
     public void setMutex(Semaphore mutex) {
         this.mutex = mutex;
+    }
+
+    @Override
+    @JsonIgnore
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        return null;
+    }
+
+    @Override
+    @JsonIgnore
+    public Object getCredentials() {
+        return null;
+    }
+
+    @Override
+    @JsonIgnore
+    public Object getDetails() {
+        return null;
+    }
+
+    @Override
+    @JsonIgnore
+    public Object getPrincipal() {
+        return null;
+    }
+
+    @Override
+    @JsonIgnore
+    public boolean isAuthenticated() {
+        return true;
+    }
+
+    @Override
+    public void setAuthenticated(boolean isAuthenticated) throws IllegalArgumentException {
+
     }
 }

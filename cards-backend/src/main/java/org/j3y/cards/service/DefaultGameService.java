@@ -13,8 +13,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -50,42 +53,66 @@ public class DefaultGameService implements GameService {
 
     @Override
     public Game createGame(String name, Player owner, GameConfig gameConfig) throws InterruptedException {
-        // Check if game already exists
-        if (gameMap.get(name) != null) {
-            throw new GameAlreadyExistsException();
+        try {
+            owner.getMutex().acquire();
+            if (gameMap.containsKey(name)) {
+                throw new GameAlreadyExistsException();
+            }
+
+            if (owner.getCurrentGame() != null) {
+                throw new InvalidActionException("Cannot create a game while you are already in one.");
+            }
+
+            Game game = new Game();
+            game.setName(name);
+            owner.setCurrentGame(game);
+
+            List<Player> players = new ArrayList<>();
+            players.add(owner);
+
+            game.setOwner(owner);
+            game.setPlayers(players);
+            game.setGameConfig(gameConfig);
+
+            List<String> deckNames = deckService.getDecksById(gameConfig.getDeckIds())
+                    .stream()
+                    .map(CardDeck::getDeckName)
+                    .collect(Collectors.toList());
+            game.getGameConfig().setDeckNames(deckNames);
+
+            gameMap.put(name, game);
+
+            setStateLobby(game);
+            sendPlayerUpdate(owner);
+
+            return game;
+        } finally {
+            owner.getMutex().release();
         }
-
-        Game game = new Game();
-        game.setName(name);
-        owner.setCurrentGame(game);
-
-        List<Player> players = new ArrayList<>();
-        players.add(owner);
-
-        game.setOwner(owner);
-        game.setPlayers(players);
-        game.setGameConfig(gameConfig);
-
-        List<String> deckNames = deckService.getDecksById(gameConfig.getDeckIds())
-                .stream()
-                .map(CardDeck::getDeckName)
-                .collect(Collectors.toList());
-        game.getGameConfig().setDeckNames(deckNames);
-
-        gameMap.put(name, game);
-
-        setStateLobby(game);
-
-        return game;
     }
 
-    private void sendGameUpdate(Game game) {
-        String gameJson = "{}";
+    private void sendPlayerUpdate(Player player) {
+        String playerJson = "{}";
         try {
-            gameJson = mapper.writerWithView(Views.Full.class).writeValueAsString(game);
+            playerJson = mapper.writerWithView(Views.LoggedInUser.class).writeValueAsString(player);
         } catch (JsonProcessingException e) {
-            logger.error("Error converting game to JSON: {}", e.getMessage(), e);
+            logger.error("Error converting player to JSON: {}", e.getMessage(), e);
         }
+        logger.info("Sending Player Update: {}", playerJson);
+        simpTemplate.convertAndSendToUser(player.getName(), "/userInfo", playerJson);
+    }
+
+    public void sendGameUpdate(Game game) {
+        String gameJson = "{}";
+
+        if (game != null) {
+            try {
+                gameJson = mapper.writerWithView(Views.Full.class).writeValueAsString(game);
+            } catch (JsonProcessingException e) {
+                logger.error("Error converting game to JSON: {}", e.getMessage(), e);
+            }
+        }
+
         logger.info("Sending Game Update: {}", gameJson);
         this.simpTemplate.convertAndSend("/topic/game/" + game.getName(), gameJson);
     }
@@ -143,6 +170,7 @@ public class DefaultGameService implements GameService {
 
         setStateChoosing(game);
         sendLobbiesUpdate();
+        // Note -  here We don't need to send a game update because once the choosing state takes over, one will be sent then.
 
         return game;
     }
@@ -207,6 +235,7 @@ public class DefaultGameService implements GameService {
         }
 
         setStateDoneJudging(game);
+        sendGameUpdate(game);
 
         return game;
     }
@@ -229,8 +258,17 @@ public class DefaultGameService implements GameService {
                 throw new InvalidActionException("Player is already in a game and needs to leave it in order to join.");
             }
 
+            if (game.getGameState() != GameState.LOBBY) {
+                // If we're not in the lobby, we need to give this guy some cards.
+                managePlayersPhrases(game, joiningPlayer);
+            }
+
             joiningPlayer.setCurrentGame(game);
             game.getPlayers().add(joiningPlayer);
+
+            sendPlayerUpdate(joiningPlayer);
+            sendGameUpdate(game);
+            sendLobbiesUpdate();
 
         } finally {
             joiningPlayer.getMutex().release();
@@ -242,23 +280,72 @@ public class DefaultGameService implements GameService {
 
     @Override
     public Game leaveGame(Game game, Player leavingPlayer) throws InterruptedException {
-        // TODO: Implement this
-        return null;
+        boolean isLastPlayerInGame;
+        String gameName = game.getName();
+
+        try {
+            game.getMutex().acquire(); // Lock game for state modifications.
+            leavingPlayer.getMutex().acquire(); // Lock player for state modifications.
+
+            isLastPlayerInGame = game.getPlayers().size() == 1;
+
+            if (!game.hasPlayer(leavingPlayer)) {
+                throw new InvalidActionException("Player is not a member of this game.");
+            }
+
+            if (!game.getPlayers().remove(leavingPlayer)) {
+                throw new InvalidActionException(("We were unable to remove the player from the game."));
+            }
+
+            if (!isLastPlayerInGame && game.getOwner().equals(leavingPlayer)) {
+                // We need to set a new owner since the current one is leaving.
+                Player newOwner = game.getPlayers().get(0);
+                game.setOwner(newOwner);
+                sendPlayerUpdate(newOwner); // Make sure to send an update to the new owner's
+            }
+
+            if (!isLastPlayerInGame &&
+                    game.getGameState() == GameState.JUDGING &&
+                    game.getJudgingPlayer().equals(leavingPlayer)
+            ) {
+                // The current judge is leaving while judging - we need to reset
+                // TODO: Handle this situation
+            }
+
+            leavingPlayer.setCurrentGame(null);
+            if (leavingPlayer.getPhrases() != null && game.getPhraseSet() != null) {
+                returnPlayersPhrases(game, leavingPlayer);
+            }
+
+            if (isLastPlayerInGame) {
+                this.gameMap.remove(gameName);
+                game.setOwner(null);
+                game.setGameState(GameState.ABANDONED);
+            }
+
+            sendGameUpdate(game);
+            sendPlayerUpdate(leavingPlayer);
+            sendLobbiesUpdate();
+
+        } finally {
+            leavingPlayer.getMutex().release();
+            game.getMutex().release();
+        }
+
+        return game;
     }
 
-    /* TODO: Move this list into a singleton bean that gets
-       TODO: updated on a regular timeschedule by another thread. (Java CRON thingy?) */
     @Override
     public List<Game> getAllGames() {
         return new ArrayList<>(gameMap.values());
     }
 
-    private Object getRandomItemFromCollection(Collection objects) {
+    private <T> T getRandomItemFromCollection(Collection<T> objects) {
         Random random = new Random();
         int randomIdx = random.nextInt(objects.size());
 
         int i = 0;
-        for (Object object : objects) {
+        for (T object : objects) {
             if (i == randomIdx) {
                 return object;
             }
@@ -270,7 +357,10 @@ public class DefaultGameService implements GameService {
 
     // Method assumes game has been mutex'd.
     private void manageAllPlayersPhrases(Game game) {
-        game.getPlayers().forEach(p -> managePlayersPhrases(game, p));
+        game.getPlayers().forEach(player -> {
+            managePlayersPhrases(game, player);
+            sendPlayerUpdate(player);
+        });
     }
 
     /**
@@ -282,6 +372,7 @@ public class DefaultGameService implements GameService {
      * @param player Player to manage the cards of.
      */
     private void managePlayersPhrases(Game game, Player player) {
+        logger.info("Managing player {}'s phrases", player);
         Integer curSelectedPhrasesIdx = game.getPlayerPhraseSelectionIndexMap().get(player);
         if (curSelectedPhrasesIdx != null) {
             player.getPhrases().removeAll(game.getPhraseSelections().get(curSelectedPhrasesIdx));
@@ -310,7 +401,7 @@ public class DefaultGameService implements GameService {
             int nextPlayerIdx = (game.getPlayers().indexOf(lastJudgingPlayer) + 1) % game.getPlayers().size();
             Player nextJudgingPlayer = game.getPlayers().get(nextPlayerIdx);
             game.setJudgingPlayer(nextJudgingPlayer);
-            game.setCurrentCard((Card) getRandomItemFromCollection(game.getCardSet()));
+            game.setCurrentCard(getRandomItemFromCollection(game.getCardSet()));
         } finally {
             game.getMutex().release();
         }
@@ -395,10 +486,61 @@ public class DefaultGameService implements GameService {
             game.setJudgeChoiceWinner(null);
             game.setLastWinningPlayer(null);
             game.getPlayers().forEach(player -> player.setScore(0));
+
+            sendLobbiesUpdate();
+            sendGameUpdate(game);
         } finally {
             game.getMutex().release();
         }
 
-        sendLobbiesUpdate();
+    }
+
+    @Override
+    public Game updateGame(Game game, Player updatingPlayer, GameConfig newGameConfig) throws InterruptedException {
+        try {
+            game.getMutex().acquire();
+
+            if (game.getGameState() != GameState.LOBBY) {
+                throw new WrongGameStateException("Not in the correct game state to update it's configuration. Must be in lobby state.");
+            }
+
+            if (!game.getOwner().equals(updatingPlayer)) {
+                throw new InvalidActionException("You must be the owning player to change the game settings.");
+            }
+
+            // Make sure max players was not changed due to this causing the need to possibly remove players.
+            newGameConfig.setMaxPlayers(game.getGameConfig().getMaxPlayers());
+            game.setGameConfig(newGameConfig);
+
+            sendLobbiesUpdate();
+            sendGameUpdate(game);
+        } finally {
+            game.getMutex().release();
+        }
+        return game;
+    }
+
+    @Scheduled(fixedDelay = 60000)
+    protected void cleanLobbies() {
+        ZonedDateTime oldLobbyCuttoffTime = ZonedDateTime.now(ZoneOffset.UTC).minusMinutes(30);
+        List<Game> games = gameMap.values()
+                .stream()
+                .filter(game -> game.getGameStateTime().isBefore(oldLobbyCuttoffTime)).collect(Collectors.toList());
+        if (!games.isEmpty()) {
+            logger.info("Purging these games from memory for lack of activity: {}", games);
+            games.stream().map(Game::getPlayers).forEach(players -> players.forEach(player -> player.setCurrentGame(null)));
+            games.stream().map(Game::getName).forEach(gameMap::remove);
+        }
+    }
+
+    /**
+     * Take the player's phrases back and put them back in the game set for use.
+     *
+     * @param game Game to return the phrases to.
+     * @param player Player returning phrases.
+     */
+    private void returnPlayersPhrases(Game game, Player player) {
+        game.getPhraseSet().addAll(player.getPhrases());
+        player.getPhrases().clear();
     }
 }

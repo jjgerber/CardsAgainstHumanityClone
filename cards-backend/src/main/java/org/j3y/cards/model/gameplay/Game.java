@@ -7,11 +7,12 @@ import org.apache.commons.collections4.bidimap.DualHashBidiMap;
 import org.j3y.cards.model.GameConfig;
 import org.j3y.cards.model.Views;
 
-import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.concurrent.Semaphore;
 
 public class Game {
+    @JsonView(Views.Limited.class) private final String uuid;
     @JsonView(Views.Limited.class) private String name;
     @JsonView(Views.Limited.class) private Player owner;
     @JsonIgnore private Set<Card> cardSet;
@@ -27,7 +28,8 @@ public class Game {
     @JsonView(Views.Full.class) private Card currentCard;
 
     @JsonView(Views.Limited.class) private GameState gameState;
-    @JsonView(Views.Limited.class) private LocalDateTime gameStateTime;
+    @JsonView(Views.Limited.class) private ZonedDateTime gameStateTime;
+    @JsonView(Views.Limited.class) private ZonedDateTime gameTimeoutTime;
 
     @JsonIgnore private BidiMap<Player, Integer> playerPhraseSelectionIndexMap;
     @JsonView(Views.Full.class) private List<List<Phrase>> phraseSelections;
@@ -36,11 +38,15 @@ public class Game {
     @JsonView(Views.Full.class) private Player lastWinningPlayer;
 
     public Game() {
-        super();
+        this.uuid = UUID.randomUUID().toString();
         this.mutex = new Semaphore(1);
         this.playerPhraseSelectionIndexMap = new DualHashBidiMap<>();
         this.phraseSelections = new ArrayList<>();
         this.setGameState(GameState.LOBBY);
+    }
+
+    public String getUuid() {
+        return uuid;
     }
 
     public String getName() {
@@ -108,11 +114,19 @@ public class Game {
 
     public void setGameState(GameState gameState) {
         this.gameState = gameState;
-        this.gameStateTime = LocalDateTime.now();
+        this.gameStateTime = ZonedDateTime.now();
     }
 
-    public LocalDateTime getGameStateTime() {
+    public ZonedDateTime getGameStateTime() {
         return gameStateTime;
+    }
+
+    public ZonedDateTime getGameTimeoutTime() {
+        return gameTimeoutTime;
+    }
+
+    public void setGameTimeoutTime(ZonedDateTime gameTimeoutTime) {
+        this.gameTimeoutTime = gameTimeoutTime;
     }
 
     public GameConfig getGameConfig() {
@@ -137,6 +151,11 @@ public class Game {
 
     public List<List<Phrase>> getPhraseSelections() {
         return phraseSelections;
+    }
+
+    @JsonView(Views.Full.class)
+    public int getNumPlayersSelectedPhrases() {
+        return phraseSelections == null ? 0 : phraseSelections.size();
     }
 
     public void setPhraseSelections(List<List<Phrase>> phraseSelections) {

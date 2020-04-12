@@ -10,6 +10,9 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+
 @Service
 public class DefaultGameStateTimeoutService implements GameStateTimeoutService {
 
@@ -33,31 +36,42 @@ public class DefaultGameStateTimeoutService implements GameStateTimeoutService {
     @Override
     @Async
     public void setChoosingTimeout(Game game) throws InterruptedException {
-        int turnTimeout = game.getGameConfig().getTurnTimeout();
-        logger.info("Now Choosing - Timer set for {} millseconds for state timeout.", turnTimeout);
-        Thread.sleep(turnTimeout);
+        int turnTimeoutSeconds = game.getGameConfig().getTurnTimeout();
+        int turnTimeoutMs = turnTimeoutSeconds * 1000;
+        ZonedDateTime timeoutTime = ZonedDateTime.now(ZoneOffset.UTC).plusSeconds(turnTimeoutSeconds);
+        logger.info("Now Choosing - Timer set for {} seconds for state timeout.", turnTimeoutSeconds);
+        game.setGameTimeoutTime(timeoutTime);
+        gameService.sendGameUpdate(game);
+        Thread.sleep(turnTimeoutMs);
 
         if (game.getGameState() == GameState.CHOOSING) {
-            logger.info("Game State Timed Out - state 'CHOOSING' took over {} ms.", turnTimeout);
+            logger.info("Game State Timed Out - state 'CHOOSING' took over {} seconds.", turnTimeoutSeconds);
             gameService.setStateDoneChoosing(game);
         }
     }
 
     @Override
     public void setJudgingTimeout(Game game) throws InterruptedException {
-        int turnTimeout = game.getGameConfig().getTurnTimeout();
-        logger.info("Now Judging - Timer set for {} millseconds for state timeout.", turnTimeout);
-        Thread.sleep(turnTimeout);
+        int turnTimeoutSeconds = game.getGameConfig().getTurnTimeout();
+        int turnTimeoutMs = turnTimeoutSeconds * 1000;
+        ZonedDateTime timeoutTime = ZonedDateTime.now(ZoneOffset.UTC).plusSeconds(turnTimeoutSeconds);
+        logger.info("Now Judging - Timer set for {} seconds for state timeout.", turnTimeoutSeconds);
+        game.setGameTimeoutTime(timeoutTime);
+        gameService.sendGameUpdate(game);
+        Thread.sleep(turnTimeoutMs);
 
         if (game.getGameState() == GameState.JUDGING) {
-            logger.info("Game State Timed Out - state 'JUDGING' took over {} ms.", turnTimeout);
+            logger.info("Game State Timed Out - state 'JUDGING' took over {} seconds.", turnTimeoutSeconds);
             gameService.setStateDoneJudging(game);
         }
     }
 
     @Override
     public void setDoneJudgingTimeout(Game game) throws InterruptedException {
+        ZonedDateTime timeoutTime = ZonedDateTime.now(ZoneOffset.UTC).plusSeconds(winnerTimeout / 1000);
         logger.info("Now Done Judging - Timer set for {} millseconds for state timeout.", winnerTimeout);
+        game.setGameTimeoutTime(timeoutTime);
+        gameService.sendGameUpdate(game);
         Thread.sleep(winnerTimeout);
 
         if (game.getGameState() == GameState.DONE_JUDGING) {
@@ -72,10 +86,12 @@ public class DefaultGameStateTimeoutService implements GameStateTimeoutService {
 
     @Override
     public void setGameOverTimeout(Game game) throws InterruptedException {
+        gameService.sendGameUpdate(game);
         Thread.sleep(gameOverTimeout);
 
         if (game.getGameState() == GameState.GAME_OVER) {
             gameService.setStateLobby(game);
         }
     }
+
 }
