@@ -1,12 +1,9 @@
-package org.j3y.cards.model.gameplay;
+package org.j3y.cards.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonView;
-import org.apache.commons.collections4.BidiMap;
-import org.apache.commons.collections4.bidimap.DualHashBidiMap;
-import org.j3y.cards.model.GameConfig;
-import org.j3y.cards.model.Views;
 
+import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.concurrent.Semaphore;
@@ -21,8 +18,7 @@ public class Game {
     @JsonView(Views.Full.class) private List<Player> players;
 
     @JsonView(Views.Limited.class) private GameConfig gameConfig;
-
-    // Stateful stuff
+    
     @JsonIgnore private Semaphore mutex;
     @JsonView(Views.Full.class) private Player judgingPlayer;
     @JsonView(Views.Full.class) private Card currentCard;
@@ -30,9 +26,7 @@ public class Game {
     @JsonView(Views.Limited.class) private GameState gameState;
     @JsonView(Views.Limited.class) private ZonedDateTime gameStateTime;
     @JsonView(Views.Limited.class) private ZonedDateTime gameTimeoutTime;
-
-    @JsonIgnore private BidiMap<Player, Integer> playerPhraseSelectionIndexMap;
-    @JsonView(Views.Full.class) private List<List<Phrase>> phraseSelections;
+    @JsonView(Views.Judging.class) private List<List<Phrase>> phraseSelections;
 
     @JsonView(Views.Full.class) private Integer judgeChoiceWinner;
     @JsonView(Views.Full.class) private Player lastWinningPlayer;
@@ -40,7 +34,6 @@ public class Game {
     public Game() {
         this.uuid = UUID.randomUUID().toString();
         this.mutex = new Semaphore(1);
-        this.playerPhraseSelectionIndexMap = new DualHashBidiMap<>();
         this.phraseSelections = new ArrayList<>();
         this.setGameState(GameState.LOBBY);
     }
@@ -114,7 +107,7 @@ public class Game {
 
     public void setGameState(GameState gameState) {
         this.gameState = gameState;
-        this.gameStateTime = ZonedDateTime.now();
+        this.gameStateTime = ZonedDateTime.now(ZoneOffset.UTC);
     }
 
     public ZonedDateTime getGameStateTime() {
@@ -139,14 +132,6 @@ public class Game {
 
     public Semaphore getMutex() {
         return mutex;
-    }
-
-    public Map<Player, Integer> getPlayerPhraseSelectionIndexMap() {
-        return playerPhraseSelectionIndexMap;
-    }
-
-    public void resetPlayerPhraseSelections() {
-        this.playerPhraseSelectionIndexMap.clear();
     }
 
     public List<List<Phrase>> getPhraseSelections() {
@@ -178,20 +163,12 @@ public class Game {
         this.judgeChoiceWinner = judgeChoiceWinner;
     }
 
-    public Boolean hasPlayerSelected(Player player) {
-        return playerPhraseSelectionIndexMap.containsKey(player);
-    }
-
     public Boolean haveAllPlayersSelected() {
        return players.size() == phraseSelections.size();
     }
 
     public boolean isPhraseUpForVote(Integer voteIndex) {
-        return phraseSelections.get(voteIndex) != null;
-    }
-
-    public boolean hasPhrases(Collection<Phrase> phrases) {
-        return phraseSet.containsAll(phrases);
+        return voteIndex >= 0 && voteIndex < phraseSelections.size();
     }
 
     public boolean hasPlayer(Player player) {
@@ -203,11 +180,16 @@ public class Game {
     }
 
     public Player getRoundWinner() {
-        if (judgeChoiceWinner == null) {
+        if (judgeChoiceWinner == null || judgeChoiceWinner < 0 || judgeChoiceWinner >= phraseSelections.size()) {
             return null;
         }
 
-        return playerPhraseSelectionIndexMap.inverseBidiMap().get(judgeChoiceWinner);
+        List<Phrase> winningPhrases = this.getPhraseSelections().get(judgeChoiceWinner);
+
+        return players.stream()
+                .filter(player -> player.getSelectedPhrases().equals(winningPhrases))
+                .findFirst()
+                .orElse(null);
     }
 
     public Player getGameWinner() {
@@ -235,5 +217,4 @@ public class Game {
                 .max()
                 .orElse(0);
     }
-
 }

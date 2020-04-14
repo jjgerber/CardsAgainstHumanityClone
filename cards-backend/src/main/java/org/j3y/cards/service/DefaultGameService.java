@@ -6,9 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.j3y.cards.exception.GameAlreadyExistsException;
 import org.j3y.cards.exception.InvalidActionException;
 import org.j3y.cards.exception.WrongGameStateException;
-import org.j3y.cards.model.GameConfig;
-import org.j3y.cards.model.Views;
-import org.j3y.cards.model.gameplay.*;
+import org.j3y.cards.model.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -103,11 +101,15 @@ public class DefaultGameService implements GameService {
     }
 
     public void sendGameUpdate(Game game) {
+        sendGameUpdate(game, Views.Full.class);
+    }
+
+    public void sendGameUpdate(Game game, Class view) {
         String gameJson = "{}";
 
         if (game != null) {
             try {
-                gameJson = mapper.writerWithView(Views.Full.class).writeValueAsString(game);
+                gameJson = mapper.writerWithView(view).writeValueAsString(game);
             } catch (JsonProcessingException e) {
                 logger.error("Error converting game to JSON: {}", e.getMessage(), e);
             }
@@ -158,8 +160,8 @@ public class DefaultGameService implements GameService {
             game.setCardSet(cards);
             game.setPhraseSet(phrases);
 
-            Player startingPlayer = (Player) getRandomItemFromCollection(game.getPlayers());
-            Card startingCard = (Card) getRandomItemFromCollection(game.getCardSet());
+            Player startingPlayer = getRandomItemFromCollection(game.getPlayers());
+            Card startingCard = getRandomItemFromCollection(game.getCardSet());
 
             game.setJudgingPlayer(startingPlayer);
             game.setCurrentCard(startingCard);
@@ -176,35 +178,62 @@ public class DefaultGameService implements GameService {
     }
 
     @Override
-    public Game pickPhrasesForCard(Game game, List<Phrase> selectedPhrases, Player selectingPlayer) throws InterruptedException {
+    public Game pickPhrasesForCard(Game game, List<String> selectedPhraseIds, Player selectingPlayer) throws InterruptedException {
         try {
             game.getMutex().acquire(); // Lock game for state modifications.
+            selectingPlayer.getMutex().acquire();
+
+            logger.info("Attempting to pick phrases: {} by player: {}", selectedPhraseIds, selectingPlayer);
 
             if (game.getGameState() != GameState.CHOOSING) {
+                logger.error("You cannot select phrases when not in choosing mode.");
                 throw new WrongGameStateException("You cannot select phrases when not in choosing mode.");
             }
 
-            if (game.hasPhrases(selectedPhrases)) {
-                throw new InvalidActionException("Current game does not have one or more selected phrases available.");
-            }
-
-            if (game.hasPlayer(selectingPlayer)) {
+            if (!game.hasPlayer(selectingPlayer)) {
+                logger.error("Player is not a member of this game.");
                 throw new InvalidActionException("Player is not a member of this game.");
             }
 
-            if (game.hasPlayerSelected(selectingPlayer)) {
+            if (!selectingPlayer.getSelectedPhrases().isEmpty()) {
+                logger.error("Player has already selected for this turn.");
                 throw new InvalidActionException("Player has already selected a phrase for this turn.");
             }
 
-            game.getPhraseSelections().add(selectedPhrases);
-            game.getPlayerPhraseSelectionIndexMap().put(selectingPlayer, game.getPhraseSelections().indexOf(selectedPhrases));
+            if (game.getJudgingPlayer().equals(selectingPlayer)) {
+                logger.error("Player cannot select cards because player is a judge for this round.");
+                throw new InvalidActionException("Player cannot select cards because player is a judge for this round.");
+            }
+
+            if (game.getCurrentCard().getNumPhrases() != selectedPhraseIds.size()) {
+                logger.error("Player selected an incorrect amount of phrases for this card.");
+                throw new InvalidActionException("Player selected an incorrect amount of phrases for this card.");
+            }
+
+            // Make sure they're in the order that they were selected in.
+            List<Phrase> phraseSelections = new ArrayList<>(selectedPhraseIds.size());
+            for (String phraseUuid : selectedPhraseIds) {
+                Phrase selectedPhrase = selectingPlayer.getPhrases().stream()
+                        .filter(phrase -> phrase.getUuid().equals(phraseUuid))
+                        .findFirst()
+                        .orElseThrow(() -> new InvalidActionException("Player does not have one or more of the selected phrases"));
+                phraseSelections.add(selectedPhrase);
+                selectingPlayer.getSelectedPhrases().add(selectedPhrase);
+            }
+
+            game.getPhraseSelections().add(phraseSelections);
+            selectingPlayer.getPhrases().removeAll(phraseSelections);
 
             // If all players have selected, change game state to DONE_CHOOSING.
             if (game.haveAllPlayersSelected()) {
                 setStateDoneChoosing(game);
             }
 
+            sendGameUpdate(game);
+            sendPlayerUpdate(selectingPlayer);
+
         } finally {
+            selectingPlayer.getMutex().release();
             game.getMutex().release(); // Release lock.
         }
 
@@ -220,22 +249,23 @@ public class DefaultGameService implements GameService {
                 throw new InvalidActionException("Cannot vote when game is not in judging mode.");
             }
 
-            if (game.isPhraseUpForVote(voteIndex)) {
+            if (!game.isPhraseUpForVote(voteIndex)) {
                 throw new InvalidActionException("Phrase was not found, an invalid selection was made.");
             }
 
-            if (votingPlayer != game.getJudgingPlayer()) {
+            if (!game.getJudgingPlayer().equals(votingPlayer)) {
                 throw new InvalidActionException("Player is not the judging player.");
             }
 
             game.setJudgeChoiceWinner(voteIndex);
 
+            logger.info("Last Winning Player: {}", game.getLastWinningPlayer());
+            logger.info("Winning Phrase: {}", game.getPhraseSelections().get(voteIndex));
         } finally {
             game.getMutex().release();
         }
 
         setStateDoneJudging(game);
-        sendGameUpdate(game);
 
         return game;
     }
@@ -264,7 +294,10 @@ public class DefaultGameService implements GameService {
             }
 
             joiningPlayer.setCurrentGame(game);
+            joiningPlayer.getSelectedPhrases().clear(); // sanity check - clear these out
+            joiningPlayer.setScore(0); // sanity check
             game.getPlayers().add(joiningPlayer);
+
 
             sendPlayerUpdate(joiningPlayer);
             sendGameUpdate(game);
@@ -293,13 +326,17 @@ public class DefaultGameService implements GameService {
                 throw new InvalidActionException("Player is not a member of this game.");
             }
 
+            if (!leavingPlayer.getSelectedPhrases().isEmpty() && game.getGameState() == GameState.JUDGING) {
+                throw new InvalidActionException("You cannot leave while your cards are being judged.");
+            }
+
             if (!game.getPlayers().remove(leavingPlayer)) {
                 throw new InvalidActionException(("We were unable to remove the player from the game."));
             }
 
             if (!isLastPlayerInGame && game.getOwner().equals(leavingPlayer)) {
                 // We need to set a new owner since the current one is leaving.
-                Player newOwner = game.getPlayers().get(0);
+                Player newOwner = game.getPlayers().get(0); // we've already removed the leaving player.
                 game.setOwner(newOwner);
                 sendPlayerUpdate(newOwner); // Make sure to send an update to the new owner's
             }
@@ -315,6 +352,10 @@ public class DefaultGameService implements GameService {
             leavingPlayer.setCurrentGame(null);
             if (leavingPlayer.getPhrases() != null && game.getPhraseSet() != null) {
                 returnPlayersPhrases(game, leavingPlayer);
+
+                // take selected phrases back - we have confirmed that they haven't been judged yet above.
+                game.getPhraseSet().addAll(leavingPlayer.getSelectedPhrases());
+                leavingPlayer.getSelectedPhrases().clear(); // sanity check - clear these out
             }
 
             if (isLastPlayerInGame) {
@@ -322,6 +363,9 @@ public class DefaultGameService implements GameService {
                 game.setOwner(null);
                 game.setGameState(GameState.ABANDONED);
             }
+
+
+            leavingPlayer.setScore(0); // sanity check
 
             sendGameUpdate(game);
             sendPlayerUpdate(leavingPlayer);
@@ -364,7 +408,7 @@ public class DefaultGameService implements GameService {
     }
 
     /**
-     * Ensure a player has 10 phrases.
+     * Ensure a player has 10 phrases. Clear out any selected phrases.
      *
      * This method assumes the game and player have already been mutexed. BE CAREFUL!
      *
@@ -373,21 +417,21 @@ public class DefaultGameService implements GameService {
      */
     private void managePlayersPhrases(Game game, Player player) {
         logger.info("Managing player {}'s phrases", player);
-        Integer curSelectedPhrasesIdx = game.getPlayerPhraseSelectionIndexMap().get(player);
-        if (curSelectedPhrasesIdx != null) {
-            player.getPhrases().removeAll(game.getPhraseSelections().get(curSelectedPhrasesIdx));
-        }
 
         if (player.getPhrases().size() >= 10) {
             return;
         }
 
+        if (game.getPhraseSet().isEmpty()) {
+            return;
+        }
+
         int numPhrasesToGet = 10 - player.getPhrases().size();
+        numPhrasesToGet = Math.min(numPhrasesToGet, game.getPhraseSet().size());
         List<Phrase> list = new ArrayList<>(game.getPhraseSet());
-        Collections.shuffle(list);
         Set<Phrase> randomSet = new HashSet<>(list.subList(0, numPhrasesToGet));
         game.getPhraseSet().removeAll(randomSet);
-        player.setPhrases(randomSet);
+        player.getPhrases().addAll(randomSet);
     }
 
     @Override
@@ -395,6 +439,9 @@ public class DefaultGameService implements GameService {
         try {
             game.getMutex().acquire();
             game.setGameState(GameState.CHOOSING);
+
+            // Clear out the phrase selections
+            game.getPhraseSelections().clear();
 
             // Sort out the judge
             Player lastJudgingPlayer = game.getJudgingPlayer();
@@ -426,10 +473,12 @@ public class DefaultGameService implements GameService {
             game.getMutex().acquire();
 
             game.setGameState(GameState.JUDGING);
+            // Shuffle the selections.
+            Collections.shuffle(game.getPhraseSelections());
         } finally {
             game.getMutex().release();
         }
-
+        // Game update will be sent to clients by the gameStateTimeoutService w/ timeout time.
         gameStateTimeoutService.setJudgingTimeout(game);
     }
 
@@ -439,20 +488,41 @@ public class DefaultGameService implements GameService {
             game.getMutex().acquire();
 
             game.setGameState(GameState.DONE_JUDGING);
+            boolean returnPhrases = false;
 
             Player winner = game.getRoundWinner();
             if (winner == null) {
-                // TODO: Give all phrases back to original owners
+                returnPhrases = true;
             } else {
                 manageAllPlayersPhrases(game);
                 winner.incrementScore();
                 game.setLastWinningPlayer(winner);
             }
 
+            for (Player player : game.getPlayers()) {
+                try {
+                    player.getMutex().acquire();
+
+                    List<Phrase> selectedPhrases = player.getSelectedPhrases();
+                    if (selectedPhrases.isEmpty()) continue;
+
+                    if (returnPhrases) {
+                        player.getPhrases().addAll(player.getSelectedPhrases());
+                    }
+
+                    player.getSelectedPhrases().clear();
+                    sendPlayerUpdate(player);
+                } catch (InterruptedException e) {
+                    logger.error("Interrupted while trying to give player back their cards.");
+                } finally {
+                    player.getMutex().release();
+                }
+            }
         } finally {
             game.getMutex().release();
         }
 
+        // Game update will be sent to clients by the gameStateTimeoutService w/ timeout time.
         gameStateTimeoutService.setDoneJudgingTimeout(game);
     }
 
@@ -470,6 +540,7 @@ public class DefaultGameService implements GameService {
             game.getMutex().release();
         }
 
+        // Game update will be sent to clients by the gameStateTimeoutService w/ timeout time.
         gameStateTimeoutService.setGameOverTimeout(game);
     }
 
@@ -525,7 +596,8 @@ public class DefaultGameService implements GameService {
         ZonedDateTime oldLobbyCuttoffTime = ZonedDateTime.now(ZoneOffset.UTC).minusMinutes(30);
         List<Game> games = gameMap.values()
                 .stream()
-                .filter(game -> game.getGameStateTime().isBefore(oldLobbyCuttoffTime)).collect(Collectors.toList());
+                .filter(game -> game.getGameStateTime().isBefore(oldLobbyCuttoffTime))
+                .collect(Collectors.toList());
         if (!games.isEmpty()) {
             logger.info("Purging these games from memory for lack of activity: {}", games);
             games.stream().map(Game::getPlayers).forEach(players -> players.forEach(player -> player.setCurrentGame(null)));
@@ -541,6 +613,7 @@ public class DefaultGameService implements GameService {
      */
     private void returnPlayersPhrases(Game game, Player player) {
         game.getPhraseSet().addAll(player.getPhrases());
+        game.getPhraseSet().addAll(player.getSelectedPhrases());
         player.getPhrases().clear();
     }
 }

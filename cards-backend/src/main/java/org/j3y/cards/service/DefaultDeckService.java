@@ -1,6 +1,6 @@
 package org.j3y.cards.service;
 
-import org.j3y.cards.model.gameplay.CardDeck;
+import org.j3y.cards.model.CardDeck;
 import org.j3y.cards.repository.DeckRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;

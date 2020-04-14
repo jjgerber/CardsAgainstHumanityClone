@@ -40,7 +40,7 @@
       clipped-left
     >
       <v-app-bar-nav-icon @click.stop="drawer = !drawer"></v-app-bar-nav-icon>
-      <v-toolbar-title>Cards Versus Humanity</v-toolbar-title>
+      <v-toolbar-title>Cards vs. Humanity</v-toolbar-title>
       <v-spacer></v-spacer>
       <v-btn icon @click="showSetNameDialog = true">
         <v-icon>mdi-account</v-icon>

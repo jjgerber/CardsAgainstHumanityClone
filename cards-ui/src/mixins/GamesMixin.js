@@ -64,6 +64,26 @@ export default {
       });
     },
 
+    callSelectPhrases(name, phrases) {
+      return new Promise((resolve, reject) => {
+        axios.post(`/api/v1/games/${name}/select-phrases`, phrases).then((response) => {
+          resolve(response.data);
+        }).catch((error) => {
+          reject(error);
+        });
+      });
+    },
+
+    callJudgeVote(name, voteIdx) {
+      return new Promise((resolve, reject) => {
+        axios.post(`/api/v1/games/${name}/select-winner/${voteIdx}`).then((response) => {
+          resolve(response.data);
+        }).catch((error) => {
+          reject(error);
+        });
+      });
+    },
+
     callLeaveGame(name) {
       return new Promise((resolve, reject) => {
         axios.post(`/api/v1/games/${name}/leave`).then((response) => {

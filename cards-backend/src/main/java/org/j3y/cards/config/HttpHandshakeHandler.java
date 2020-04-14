@@ -1,6 +1,6 @@
 package org.j3y.cards.config;
 
-import org.j3y.cards.model.gameplay.Player;
+import org.j3y.cards.model.Player;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.server.ServerHttpRequest;

@@ -2,7 +2,7 @@ package org.j3y.cards.controller;
 
 import org.apache.commons.text.StringEscapeUtils;
 import org.j3y.cards.model.ChatMessage;
-import org.j3y.cards.model.gameplay.Player;
+import org.j3y.cards.model.Player;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.messaging.handler.annotation.DestinationVariable;

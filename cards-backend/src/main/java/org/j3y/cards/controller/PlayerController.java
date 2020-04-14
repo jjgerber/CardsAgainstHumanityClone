@@ -2,7 +2,7 @@ package org.j3y.cards.controller;
 
 import com.fasterxml.jackson.annotation.JsonView;
 import org.j3y.cards.model.Views;
-import org.j3y.cards.model.gameplay.Player;
+import org.j3y.cards.model.Player;
 import org.j3y.cards.service.GameService;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;

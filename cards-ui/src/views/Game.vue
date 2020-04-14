@@ -56,7 +56,7 @@
           </v-slide-y-reverse-transition>
 
           <v-scroll-y-transition mode="out-in">
-            <game-settings :game-name="gameName" :game-config="game.gameConfig" :user-is-owner="playerIsOwner" v-if="game.gameState === 'LOBBY'"/>
+            <game-settings :game-name="gameName" :game-config="game.gameConfig" :user-is-owner="playerIsOwner" v-if="isLobby"/>
             <v-row v-else>
               <v-col cols="auto" class="text-center align-center">
                 <v-card>
@@ -70,6 +70,14 @@
               <v-col>
                 <v-card>
                   <v-card-text>
+                    <v-scroll-y-transition>
+                      <v-alert v-if="judgeDidntChoose" type="warning">The judge didn't choose a winner in time. Your cards have been returned.</v-alert>
+                    </v-scroll-y-transition>
+                    <v-scroll-y-transition>
+                      <v-alert v-if="playerIsJudge && judgeSelection != null" color="grey" text dense>
+                          Confirm your selection? <v-btn color="green" @click="confirmJudgement()">Confirm</v-btn>
+                      </v-alert>
+                    </v-scroll-y-transition>
                     <v-container fluid class="pa-0">
                       <v-row v-if="game.gameState === 'CHOOSING'">
                         <!-- In Choosing Mode -->
@@ -88,7 +96,7 @@
                       </v-row>
                       <v-row v-else>
                         <!-- In Judging Mode -->
-                        <v-col class="text-center" v-for="(phraseSelection, idx) in game.phraseSelectons" :key="`phrases-${idx}`">
+                        <v-col class="text-center" v-for="(phraseSelection, idx) in game.phraseSelections" :key="`phrases-${idx}`">
                           <div class="card-group text-center d-inline">
                             <v-card
                               v-for="(phrase, phraseIdx) in phraseSelection" :key="`phrase-${idx}-${phraseIdx}`"
@@ -96,6 +104,7 @@
                               light
                               class="white-card pa-2 text-center align-center d-inline-flex ma-1"
                               raised
+                              @click="judgeClicked(idx)"
                             >
                               <v-card-text style="height: 100%">{{ phrase.text }}</v-card-text>
                             </v-card>
@@ -115,14 +124,18 @@
               <v-card>
                 <v-card-text class="text-center">
                   <v-scroll-y-transition>
-                    <v-alert v-if="playerIsJudge" type="info">You are judging.</v-alert>
+                    <v-alert v-if="playerIsJudge" type="info" dense>You are judging.</v-alert>
+                    <v-alert v-if="isStateChoosing && currentCard.numPhrases === selections.length" color="grey" text>
+                      Confirm your selections? <v-btn color="green" @click="confirmSelections">Confirm</v-btn>
+                    </v-alert>
                   </v-scroll-y-transition>
                   <v-card
                     v-for="(phrase, idx) in playerPhrases" :key="`player-phrase-${idx}`"
-                    color="white"
+                    :color="selections.includes(phrase.uuid) ? 'green lighten-3' : 'white'"
                     light
                     class="white-card pa-2 text-center align-center d-inline-flex ma-1"
                     :class="playerIsJudge ? 'grey' : 'white'"
+                    @click="phraseClicked(phrase)"
                     raised
                   >
                     <v-card-text style="height: 100%">{{ phrase.text }}</v-card-text>
@@ -201,6 +214,8 @@
     data: function () {
       return {
         game: null,
+        selections: [],
+        judgeSelection: null,
         hover: null,
         hasError: false,
         error: null,
@@ -224,27 +239,35 @@
       },
 
       playerIsOwner() {
-        return this.game.owner ? this.game.owner.name === this.playerInfo.name : false;
+        return this.game && this.game.owner ? this.game.owner.name === this.playerInfo.name : false;
       },
 
       playerIsJudge() {
-        return this.game.judgingPlayer ? this.playerInfo.name === this.game.judgingPlayer.name : false;
+        return this.game && this.game.judgingPlayer ? this.playerInfo.name === this.game.judgingPlayer.name : false;
       },
 
       playerHasJoined() {
-        return this.playerInfo.currentGameUuid === this.game.uuid;
+        return this.game ? this.playerInfo.currentGameUuid === this.game.uuid : false;
       },
 
       isGameFull() {
-        return this.game.numPlayers >= this.game.gameConfig.maxPlayers;
+        return this.game && (this.game.numPlayers >= this.game.gameConfig.maxPlayers);
       },
 
       isAbandoned() {
-        return this.game.gameState === 'ABANDONED';
+        return this.game && this.game.gameState === 'ABANDONED';
       },
 
       isLobby() {
-        return this.game.gameState === 'LOBBY';
+        return this.game && this.game.gameState === 'LOBBY';
+      },
+
+      isStateChoosing() {
+        return this.game && this.game.gameState === 'CHOOSING';
+      },
+
+      isStateJudging() {
+        return this.game && this.game.gameState === 'JUDGING';
       },
 
       gameTimeout() {
@@ -253,13 +276,16 @@
 
       currentCard() {
         return this.game && this.game.currentCard ? this.game.currentCard : null;
+      },
+
+      judgeDidntChoose() {
+        return this.game && this.game.gameState === 'DONE_JUDGING' && this.game.judgeChoiceWinner == null;
       }
     },
 
     watch: {
       gameTimeout() {
         if (this.gameTimeout) {
-          console.log("SETTING TIMER...")
           this.timerCount = Math.round((this.gameTimeout - new Date()) / 1000);
           clearInterval(this.timer);
           this.timer = setInterval(() => {
@@ -271,6 +297,20 @@
           }, 1000);
         } else {
           this.timerCount = 0;
+        }
+      },
+
+      isStateChoosing() {
+        // If we're done choosing, clear selections.
+        if (!this.isStateChoosing) {
+          this.selections = [];
+        }
+      },
+
+      isStateJudging() {
+        // If we're done judging, clear judge selection.
+        if (!this.isStateJudging) {
+          this.judgeSelection = null;
         }
       }
     },
@@ -304,6 +344,36 @@
           this.hasError = true;
           this.error = error.response.data.message;
         });
+      },
+
+      phraseClicked(phrase) {
+        if (this.isStateChoosing) {
+          if (this.selections.includes(phrase.uuid)) {
+            // User is clicking a card already selected, unselect it.
+            this.selections = this.selections.filter((value => value !== phrase.uuid));
+            return;
+          }
+          if (this.currentCard.numPhrases > this.selections.length) {
+            this.selections.push(phrase.uuid);
+          }
+        }
+      },
+
+      judgeClicked(index) {
+        if (this.isStateJudging && this.playerIsJudge) {
+          console.log("Got a click from the judge on index: " + index);
+          this.judgeSelection = index;
+        }
+      },
+
+      confirmJudgement() {
+        this.callJudgeVote(this.gameName, this.judgeSelection).catch(error => {
+          this.error = error;
+        });
+      },
+
+      confirmSelections() {
+        this.callSelectPhrases(this.gameName, this.selections);
       },
 
       connect() {

@@ -1,7 +1,8 @@
 package org.j3y.cards.service;
 
-import org.j3y.cards.model.gameplay.Game;
-import org.j3y.cards.model.gameplay.GameState;
+import org.j3y.cards.model.Game;
+import org.j3y.cards.model.GameState;
+import org.j3y.cards.model.Views;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -57,7 +58,7 @@ public class DefaultGameStateTimeoutService implements GameStateTimeoutService {
         ZonedDateTime timeoutTime = ZonedDateTime.now(ZoneOffset.UTC).plusSeconds(turnTimeoutSeconds);
         logger.info("Now Judging - Timer set for {} seconds for state timeout.", turnTimeoutSeconds);
         game.setGameTimeoutTime(timeoutTime);
-        gameService.sendGameUpdate(game);
+        gameService.sendGameUpdate(game, Views.Judging.class);
         Thread.sleep(turnTimeoutMs);
 
         if (game.getGameState() == GameState.JUDGING) {
@@ -71,7 +72,7 @@ public class DefaultGameStateTimeoutService implements GameStateTimeoutService {
         ZonedDateTime timeoutTime = ZonedDateTime.now(ZoneOffset.UTC).plusSeconds(winnerTimeout / 1000);
         logger.info("Now Done Judging - Timer set for {} millseconds for state timeout.", winnerTimeout);
         game.setGameTimeoutTime(timeoutTime);
-        gameService.sendGameUpdate(game);
+        gameService.sendGameUpdate(game, Views.Judging.class);
         Thread.sleep(winnerTimeout);
 
         if (game.getGameState() == GameState.DONE_JUDGING) {

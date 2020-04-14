@@ -5,7 +5,7 @@ import org.j3y.cards.exception.GameNotFoundException;
 import org.j3y.cards.exception.InvalidActionException;
 import org.j3y.cards.model.GameConfig;
 import org.j3y.cards.model.Views;
-import org.j3y.cards.model.gameplay.Game;
+import org.j3y.cards.model.Game;
 import org.j3y.cards.service.GameService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
@@ -86,5 +86,31 @@ public class GameController extends BaseController {
             throw new InvalidActionException("That game does not exist.");
         }
         return gameService.leaveGame(game, getPlayer());
+    }
+
+    @JsonView(Views.Full.class)
+    @PostMapping(value = "/{name}/select-phrases", produces = MediaType.APPLICATION_JSON_VALUE)
+    public Game selectPhrases(@PathVariable String name, @RequestBody List<String> selectedPhraseIds) throws InterruptedException {
+        Game game = gameService.getGameByName(name);
+        if (game == null) {
+            throw new InvalidActionException("That game does not exist.");
+        }
+        return gameService.pickPhrasesForCard(game, selectedPhraseIds, getPlayer());
+    }
+
+    @JsonView(Views.Full.class)
+    @PostMapping(value = "/{name}/select-winner/{winnerIndex}", produces = MediaType.APPLICATION_JSON_VALUE)
+    public Game selectWinner(@PathVariable String name, @PathVariable Integer winnerIndex) throws InterruptedException {
+        Game game = gameService.getGameByName(name);
+
+        if (game == null) {
+            throw new InvalidActionException("That game does not exist.");
+        }
+
+        if (winnerIndex == null) {
+            throw new InvalidActionException("You must supply a winner index.");
+        }
+
+        return gameService.vote(game, getPlayer(), winnerIndex);
     }
 }

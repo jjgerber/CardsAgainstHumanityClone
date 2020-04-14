@@ -1,8 +1,8 @@
 package org.j3y.cards;
 
-import org.j3y.cards.model.gameplay.Card;
-import org.j3y.cards.model.gameplay.CardDeck;
-import org.j3y.cards.model.gameplay.Phrase;
+import org.j3y.cards.model.Card;
+import org.j3y.cards.model.CardDeck;
+import org.j3y.cards.model.Phrase;
 import org.j3y.cards.repository.CardRepository;
 import org.j3y.cards.repository.DeckRepository;
 import org.j3y.cards.repository.PhraseRepository;

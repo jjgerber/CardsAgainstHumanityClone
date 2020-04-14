@@ -1,6 +1,6 @@
 package org.j3y.cards.service;
 
-import org.j3y.cards.model.gameplay.Game;
+import org.j3y.cards.model.Game;
 import org.springframework.scheduling.annotation.Async;
 
 public interface GameStateTimeoutService {

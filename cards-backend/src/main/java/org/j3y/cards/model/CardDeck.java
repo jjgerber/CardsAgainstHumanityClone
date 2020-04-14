@@ -1,7 +1,6 @@
-package org.j3y.cards.model.gameplay;
+package org.j3y.cards.model;
 
 import com.fasterxml.jackson.annotation.JsonView;
-import org.j3y.cards.model.Views;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;

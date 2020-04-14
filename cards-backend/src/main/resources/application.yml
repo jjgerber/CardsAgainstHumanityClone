@@ -1,6 +1,6 @@
 game:
-  winner-timeout: 15000
-  game-over-timeout: 30000
+  winner-timeout: 10000
+  game-over-timeout: 15000
 
 server:
   servlet:

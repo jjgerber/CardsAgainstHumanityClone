@@ -4,7 +4,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
 @ResponseStatus(value = HttpStatus.BAD_REQUEST, reason = "Game is not in the right state for that action.")
-public class WrongGameStateException extends RuntimeException {
+public class WrongGameStateException extends CardsException {
+
+    private final HttpStatus status = HttpStatus.BAD_REQUEST;
+
     public WrongGameStateException() {
         super();
     }
@@ -15,5 +18,9 @@ public class WrongGameStateException extends RuntimeException {
 
     public WrongGameStateException(String message, Throwable throwable) {
         super(message, throwable);
+    }
+
+    public HttpStatus getStatus() {
+        return status;
     }
 }

@@ -1,18 +1,15 @@
-package org.j3y.cards.model.gameplay;
+package org.j3y.cards.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonView;
-import org.j3y.cards.model.Views;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.Semaphore;
 
 public class Player implements Authentication {
+
     @JsonView(Views.Limited.class)
     private String playerName;
 
@@ -24,6 +21,9 @@ public class Player implements Authentication {
     @JsonView(Views.LoggedInUser.class)
     private Set<Phrase> phrases;
 
+    @JsonView(Views.LoggedInUser.class)
+    private List<Phrase> selectedPhrases;
+
     @JsonView(Views.Limited.class)
     private int score;
 
@@ -33,6 +33,7 @@ public class Player implements Authentication {
         this.name = UUID.randomUUID().toString();
         this.mutex = new Semaphore(1);
         this.phrases = new HashSet<>();
+        this.selectedPhrases = new ArrayList<>();
         this.score = 0;
     }
 
@@ -71,6 +72,14 @@ public class Player implements Authentication {
 
     public void setPhrases(Set<Phrase> phrases) {
         this.phrases = phrases;
+    }
+
+    public List<Phrase> getSelectedPhrases() {
+        return selectedPhrases;
+    }
+
+    public void setSelectedPhrases(List<Phrase> selectedPhrases) {
+        this.selectedPhrases = selectedPhrases;
     }
 
     public int getScore() {
@@ -126,5 +135,18 @@ public class Player implements Authentication {
     @Override
     public void setAuthenticated(boolean isAuthenticated) throws IllegalArgumentException {
 
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Player player = (Player) o;
+        return name.equals(player.name);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(name);
     }
 }

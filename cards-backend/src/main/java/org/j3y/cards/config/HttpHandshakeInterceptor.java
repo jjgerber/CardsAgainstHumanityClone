@@ -1,6 +1,6 @@
 package org.j3y.cards.config;
 
-import org.j3y.cards.model.gameplay.Player;
+import org.j3y.cards.model.Player;
 import org.springframework.http.server.ServerHttpRequest;
 import org.springframework.http.server.ServerHttpResponse;
 import org.springframework.security.core.context.SecurityContext;

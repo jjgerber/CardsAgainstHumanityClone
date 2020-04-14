@@ -1,10 +1,10 @@
-package org.j3y.cards.model.gameplay;
+package org.j3y.cards.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonView;
-import org.j3y.cards.model.Views;
 
 import javax.persistence.*;
+import java.util.Objects;
 import java.util.UUID;
 
 @Entity
@@ -47,5 +47,18 @@ public class Phrase {
 
     public void setOwningDeck(CardDeck owningDeck) {
         this.owningDeck = owningDeck;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Phrase phrase = (Phrase) o;
+        return uuid.equals(phrase.uuid);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(uuid);
     }
 }

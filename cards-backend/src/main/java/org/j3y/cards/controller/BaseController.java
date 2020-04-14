@@ -1,6 +1,6 @@
 package org.j3y.cards.controller;
 
-import org.j3y.cards.model.gameplay.Player;
+import org.j3y.cards.model.Player;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 

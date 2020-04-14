@@ -4,7 +4,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
 @ResponseStatus(value = HttpStatus.NOT_FOUND, reason = "That game was not found.")
-public class GameNotFoundException extends RuntimeException {
+public class GameNotFoundException extends CardsException {
+
+    private final HttpStatus status = HttpStatus.NOT_FOUND;
+
     public GameNotFoundException() {
         super();
     }
@@ -15,5 +18,9 @@ public class GameNotFoundException extends RuntimeException {
 
     public GameNotFoundException(String message, Throwable throwable) {
         super(message, throwable);
+    }
+
+    public HttpStatus getStatus() {
+        return status;
     }
 }
