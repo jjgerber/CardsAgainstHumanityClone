@@ -6,6 +6,7 @@ import javax.persistence.CascadeType;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.OneToMany;
+import java.util.HashSet;
 import java.util.Set;
 
 @Entity
@@ -25,6 +26,11 @@ public class CardDeck {
     @JsonView(Views.Full.class)
     @OneToMany(mappedBy = "owningDeck", cascade = CascadeType.ALL)
     private Set<Phrase> phraseSet;
+
+    public CardDeck() {
+        this.cardSet = new HashSet<>();
+        this.phraseSet = new HashSet<>();
+    }
 
     public String getUuid() {
         return uuid;

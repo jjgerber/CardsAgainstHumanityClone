@@ -1,6 +1,5 @@
 package org.j3y.cards.service;
 
-import com.fasterxml.jackson.annotation.JsonView;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.j3y.cards.exception.GameAlreadyExistsException;
@@ -119,7 +118,6 @@ public class DefaultGameService implements GameService {
         this.simpTemplate.convertAndSend("/topic/game/" + game.getName(), gameJson);
     }
 
-    @JsonView(Views.Limited.class)
     private void sendLobbiesUpdate() {
         String gamesJson = "[]";
         try {
@@ -224,17 +222,17 @@ public class DefaultGameService implements GameService {
             game.getPhraseSelections().add(phraseSelections);
             selectingPlayer.getPhrases().removeAll(phraseSelections);
 
-            // If all players have selected, change game state to DONE_CHOOSING.
-            if (game.haveAllPlayersSelected()) {
-                setStateDoneChoosing(game);
-            }
-
             sendGameUpdate(game);
             sendPlayerUpdate(selectingPlayer);
 
         } finally {
             selectingPlayer.getMutex().release();
             game.getMutex().release(); // Release lock.
+        }
+
+        // If all players have selected, change game state to DONE_CHOOSING.
+        if (game.haveAllPlayersSelected()) {
+            setStateDoneChoosing(game);
         }
 
         return game;
@@ -297,7 +295,6 @@ public class DefaultGameService implements GameService {
             joiningPlayer.getSelectedPhrases().clear(); // sanity check - clear these out
             joiningPlayer.setScore(0); // sanity check
             game.getPlayers().add(joiningPlayer);
-
 
             sendPlayerUpdate(joiningPlayer);
             sendGameUpdate(game);
@@ -442,6 +439,7 @@ public class DefaultGameService implements GameService {
 
             // Clear out the phrase selections
             game.getPhraseSelections().clear();
+            game.setJudgeChoiceWinner(null);
 
             // Sort out the judge
             Player lastJudgingPlayer = game.getJudgingPlayer();
@@ -469,17 +467,29 @@ public class DefaultGameService implements GameService {
     }
 
     private void setStateJudging(Game game) throws InterruptedException {
+
+        boolean hasNoSelections = false;
         try {
             game.getMutex().acquire();
 
             game.setGameState(GameState.JUDGING);
-            // Shuffle the selections.
-            Collections.shuffle(game.getPhraseSelections());
+
+            if (game.getPhraseSelections().isEmpty()) {
+                hasNoSelections = true;
+            } else {
+                // Shuffle the selections.
+                Collections.shuffle(game.getPhraseSelections());
+            }
         } finally {
             game.getMutex().release();
         }
-        // Game update will be sent to clients by the gameStateTimeoutService w/ timeout time.
-        gameStateTimeoutService.setJudgingTimeout(game);
+
+        if (hasNoSelections) {
+            setStateDoneJudging(game);
+        } else {
+            // Game update will be sent to clients by the gameStateTimeoutService w/ timeout time.
+            gameStateTimeoutService.setJudgingTimeout(game);
+        }
     }
 
     @Override

@@ -164,7 +164,7 @@ public class Game {
     }
 
     public Boolean haveAllPlayersSelected() {
-       return players.size() == phraseSelections.size();
+       return phraseSelections.size() == players.size() - 1; // minus 1 because judge doesn't choose.
     }
 
     public boolean isPhraseUpForVote(Integer voteIndex) {

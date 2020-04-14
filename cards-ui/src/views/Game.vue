@@ -71,15 +71,18 @@
                 <v-card>
                   <v-card-text>
                     <v-scroll-y-transition>
-                      <v-alert v-if="judgeDidntChoose" type="warning">The judge didn't choose a winner in time. Your cards have been returned.</v-alert>
-                    </v-scroll-y-transition>
-                    <v-scroll-y-transition>
-                      <v-alert v-if="playerIsJudge && judgeSelection != null" color="grey" text dense>
-                          Confirm your selection? <v-btn color="green" @click="confirmJudgement()">Confirm</v-btn>
+                      <v-alert v-if="judgeDidntChoose && game.phraseSelections.length === 0" class="text-center" type="error">No players chose a phrase to be judged.</v-alert>
+                      <v-alert v-else-if="judgeDidntChoose && game.phraseSelections.length > 0" class="text-center" type="error">The judge didn't choose a winner in time. Your cards have been returned.</v-alert>
+                      <v-alert v-if="playerIsJudge && judgeSelection != null" class="text-center" color="grey" text dense>
+                        Confirm your selection? <v-btn color="green" @click="confirmJudgement()">Confirm</v-btn>
+                      </v-alert>
+                      <v-alert v-if="isStateDoneJudging && judgeChoice !== null" class="text-center" type="success">
+                        Player {{ game.lastWinningPlayer.playerName }} won!
+                        They have {{ game.lastWinningPlayer.score }} point{{ game.lastWinningPlayer.score > 1 ? 's' : ''}}.
                       </v-alert>
                     </v-scroll-y-transition>
                     <v-container fluid class="pa-0">
-                      <v-row v-if="game.gameState === 'CHOOSING'">
+                      <v-row v-if="isStateChoosing">
                         <!-- In Choosing Mode -->
                         <v-col class="text-center" v-for="chosen in game.numPlayersSelectedPhrases" :key="`choices-${chosen}`">
                           <div class="card-group text-center d-inline">
@@ -100,7 +103,7 @@
                           <div class="card-group text-center d-inline">
                             <v-card
                               v-for="(phrase, phraseIdx) in phraseSelection" :key="`phrase-${idx}-${phraseIdx}`"
-                              color="white"
+                              :color="isStateDoneJudging && judgeChoice  === idx || judgeSelection === idx ? 'green lighten-3' : 'white'"
                               light
                               class="white-card pa-2 text-center align-center d-inline-flex ma-1"
                               raised
@@ -270,6 +273,10 @@
         return this.game && this.game.gameState === 'JUDGING';
       },
 
+      isStateDoneJudging() {
+        return this.game && this.game.gameState === 'DONE_JUDGING';
+      },
+
       gameTimeout() {
         return this.game && this.game.gameTimeoutTime ? Date.parse(this.game.gameTimeoutTime) : null;
       },
@@ -280,6 +287,10 @@
 
       judgeDidntChoose() {
         return this.game && this.game.gameState === 'DONE_JUDGING' && this.game.judgeChoiceWinner == null;
+      },
+
+      judgeChoice() {
+        return this.game ? this.game.judgeChoiceWinner : null;
       }
     },
 
@@ -361,8 +372,11 @@
 
       judgeClicked(index) {
         if (this.isStateJudging && this.playerIsJudge) {
-          console.log("Got a click from the judge on index: " + index);
-          this.judgeSelection = index;
+          if (this.judgeSelection === index) {
+            this.judgeSelection = null;
+          } else {
+            this.judgeSelection = index;
+          }
         }
       },
 

@@ -1,5 +1,8 @@
 package org.j3y.cards;
 
+import com.fasterxml.jackson.databind.MappingIterator;
+import com.fasterxml.jackson.dataformat.csv.CsvMapper;
+import com.fasterxml.jackson.dataformat.csv.CsvSchema;
 import org.j3y.cards.model.Card;
 import org.j3y.cards.model.CardDeck;
 import org.j3y.cards.model.Phrase;
@@ -10,7 +13,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.ApplicationListener;
 import org.springframework.stereotype.Component;
+import org.springframework.util.ResourceUtils;
 
+import java.io.File;
+import java.io.IOException;
+import java.util.Map;
 import java.util.UUID;
 
 @Component
@@ -31,202 +38,52 @@ public class CardsStartup implements ApplicationListener<ApplicationReadyEvent> 
 
     @Override
     public void onApplicationEvent(ApplicationReadyEvent event) {
-        createDeck("Main Deck");
-        createDeck("Bonus Deck");
-        createDeck("2020 Deck");
-        createDeck("Coronavirus Deck");
-        createDeck("Politics Deck");
-        createDeck("Tiger King Deck");
-        createDeck("Game of Thrones Deck");
+        try {
+            createDeck("Main Deck");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
-    private void createDeck(String deckName) {
+    private void createDeck(String deckName) throws IOException {
+
         CardDeck deck = new CardDeck();
         deck.setUuid(UUID.randomUUID().toString());
         deck.setDeckName(deckName);
+        File file = ResourceUtils.getFile("classpath:maincahdeck.csv");
+
+
+        CsvMapper mapper = new CsvMapper();
+        CsvSchema schema = CsvSchema.emptySchema().withHeader(); // use first row as header; otherwise defaults are fine
+        MappingIterator<Map<String,String>> it = mapper.readerFor(Map.class)
+                .with(schema)
+                .readValues(file);
+        while (it.hasNext()) {
+            Map<String, String> rowAsMap = it.next();
+
+            String type = rowAsMap.get("TYPE");
+            String cardText = rowAsMap.get("CARD_TEXT");
+
+            if ("BLACK".equals(type)) {
+                int numPhrases = Integer.parseInt(rowAsMap.get("NUM_PHRASES"));
+                Card card = new Card();
+                card.setUuid(UUID.randomUUID().toString());
+                card.setOwningDeck(deck);
+                card.setText(cardText);
+                card.setNumPhrases(numPhrases);
+                //cardRepository.save(card);
+                deck.getCardSet().add(card);
+            } else {
+                Phrase phrase = new Phrase();
+                phrase.setUuid(UUID.randomUUID().toString());
+                phrase.setOwningDeck(deck);
+                phrase.setText(cardText);
+                //phraseRepository.save(phrase);
+                deck.getPhraseSet().add(phrase);
+            }
+        }
+
         deck = deckRepository.save(deck);
-
-        Card card = new Card();
-        card.setOwningDeck(deck);
-        card.setText("When you have _ you also have _.");
-        card.setNumPhrases(2);
-        cardRepository.save(card);
-
-        card = new Card();
-        card.setOwningDeck(deck);
-        card.setText("I really like _ with some _.");
-        card.setNumPhrases(2);
-        cardRepository.save(card);
-
-        card = new Card();
-        card.setOwningDeck(deck);
-        card.setText("What's better than ice cream?");
-        card.setNumPhrases(1);
-        cardRepository.save(card);
-
-        card = new Card();
-        card.setOwningDeck(deck);
-        card.setText("Why smoke weed when you can _?");
-        card.setNumPhrases(1);
-        cardRepository.save(card);
-
-        card = new Card();
-        card.setOwningDeck(deck);
-        card.setText("I punched your mom and then shoved _ up her _.");
-        card.setNumPhrases(2);
-        cardRepository.save(card);
-
-
-        Phrase phrase = new Phrase();
-        phrase.setOwningDeck(deck);
-        phrase.setText("Raw buttsex. h");
-        phraseRepository.save(phrase);
-
-        phrase = new Phrase();
-        phrase.setOwningDeck(deck);
-        phrase.setText("Dildo meat. z");
-        phraseRepository.save(phrase);
-
-        phrase = new Phrase();
-        phrase.setOwningDeck(deck);
-        phrase.setText("Dildo meat. p");
-        phraseRepository.save(phrase);
-
-        phrase = new Phrase();
-        phrase.setOwningDeck(deck);
-        phrase.setText("Dildo meat. t");
-        phraseRepository.save(phrase);
-
-        phrase = new Phrase();
-        phrase.setOwningDeck(deck);
-        phrase.setText("Dildo meat. f");
-        phraseRepository.save(phrase);
-
-        phrase = new Phrase();
-        phrase.setOwningDeck(deck);
-        phrase.setText("Dildo meat. a");
-        phraseRepository.save(phrase);
-
-        phrase = new Phrase();
-        phrase.setOwningDeck(deck);
-        phrase.setText("Dildo meat. c");
-        phraseRepository.save(phrase);
-
-        phrase = new Phrase();
-        phrase.setOwningDeck(deck);
-        phrase.setText("Dildo meat. a");
-        phraseRepository.save(phrase);
-
-        phrase = new Phrase();
-        phrase.setOwningDeck(deck);
-        phrase.setText("Dildo meat. b");
-        phraseRepository.save(phrase);
-
-        phrase = new Phrase();
-        phrase.setOwningDeck(deck);
-        phrase.setText("Dildo meat whore");
-        phraseRepository.save(phrase);
-
-        phrase = new Phrase();
-        phrase.setOwningDeck(deck);
-        phrase.setText("Dildo meat shit");
-        phraseRepository.save(phrase);
-
-        phrase = new Phrase();
-        phrase.setOwningDeck(deck);
-        phrase.setText("Dildo meat lol");
-        phraseRepository.save(phrase);
-
-        phrase = new Phrase();
-        phrase.setOwningDeck(deck);
-        phrase.setText("Dildo meat yo");
-        phraseRepository.save(phrase);
-
-        phrase = new Phrase();
-        phrase.setOwningDeck(deck);
-        phrase.setText("Dildo meat");
-        phraseRepository.save(phrase);
-
-        phrase = new Phrase();
-        phrase.setOwningDeck(deck);
-        phrase.setText("Dildo meat..");
-        phraseRepository.save(phrase);
-
-        phrase = new Phrase();
-        phrase.setOwningDeck(deck);
-        phrase.setText("Raw buttsex.....");
-        phraseRepository.save(phrase);
-
-        phrase = new Phrase();
-        phrase.setOwningDeck(deck);
-        phrase.setText("Dildo meat...");
-        phraseRepository.save(phrase);
-
-        phrase = new Phrase();
-        phrase.setOwningDeck(deck);
-        phrase.setText("Dildo meat.............");
-        phraseRepository.save(phrase);
-
-        phrase = new Phrase();
-        phrase.setOwningDeck(deck);
-        phrase.setText("Dildo meat");
-        phraseRepository.save(phrase);
-
-        phrase = new Phrase();
-        phrase.setOwningDeck(deck);
-        phrase.setText("Dildo meat..");
-        phraseRepository.save(phrase);
-
-        phrase = new Phrase();
-        phrase.setOwningDeck(deck);
-        phrase.setText("Dildo meat.......");
-        phraseRepository.save(phrase);
-
-        phrase = new Phrase();
-        phrase.setOwningDeck(deck);
-        phrase.setText("Dildo meat....");
-        phraseRepository.save(phrase);
-
-        phrase = new Phrase();
-        phrase.setOwningDeck(deck);
-        phrase.setText("Dildo meat..........");
-        phraseRepository.save(phrase);
-
-        phrase = new Phrase();
-        phrase.setOwningDeck(deck);
-        phrase.setText("Dildo meat.....");
-        phraseRepository.save(phrase);
-
-        phrase = new Phrase();
-        phrase.setOwningDeck(deck);
-        phrase.setText("Dildo meat...........");
-        phraseRepository.save(phrase);
-
-        phrase = new Phrase();
-        phrase.setOwningDeck(deck);
-        phrase.setText("Dildo meat");
-        phraseRepository.save(phrase);
-
-        phrase = new Phrase();
-        phrase.setOwningDeck(deck);
-        phrase.setText("Dildo meat..");
-        phraseRepository.save(phrase);
-
-        phrase = new Phrase();
-        phrase.setOwningDeck(deck);
-        phrase.setText("Dildo meat....");
-        phraseRepository.save(phrase);
-
-        phrase = new Phrase();
-        phrase.setOwningDeck(deck);
-        phrase.setText("Dildo meat...");
-        phraseRepository.save(phrase);
-
-        phrase = new Phrase();
-        phrase.setOwningDeck(deck);
-        phrase.setText("Dildo meat......");
-        phraseRepository.save(phrase);
-
         System.out.println("Saved Deck ID: " + deck.getUuid());
     }
 }
