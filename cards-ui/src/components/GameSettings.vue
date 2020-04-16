@@ -1,97 +1,94 @@
 <template>
-  <v-container>
-    <v-card>
-      <v-card-text>
-        <v-form>
-          <v-text-field
-            v-if="!gameConfig"
-            v-model="name"
-            label="Lobby Name"
-          />
-          <v-slider
-            v-if="!gameConfig"
-            v-model="maxPlayers"
-            label="Max Players"
-            :disabled="!userIsOwner"
-            :max="10"
-            :min="3"
-            :tick-size="1"
-            :ticks="true">
-            <template v-slot:append>
-              <span>{{ maxPlayers }}</span>
+  <v-card>
+    <v-card-text>
+      <v-form>
+        <v-text-field
+          :disabled="!!gameConfig"
+          v-model="name"
+          label="Lobby Name"
+        />
+        <v-slider
+          v-model="maxPlayers"
+          label="Max Players"
+          :disabled="!userIsOwner || !!gameConfig"
+          :max="10"
+          :min="3"
+          :tick-size="1"
+          :ticks="true">
+          <template v-slot:append>
+            <span>{{ maxPlayers }}</span>
+          </template>
+        </v-slider>
+        <v-slider
+          v-model="maxScore"
+          label="Max Score (Game Winning Score)"
+          :disabled="!userIsOwner"
+          :max="15"
+          :min="1"
+          :tick-size="1"
+          :ticks="true">
+          <template v-slot:append>
+            <span>{{ maxScore }}</span>
+          </template>
+        </v-slider>
+        <v-slider
+          v-model="turnTimeLimit"
+          label="Turn Time Limit (seconds)"
+          :disabled="!userIsOwner"
+          :max="120"
+          :min="15"
+          :step="5"
+          :tick-size="5"
+          :ticks="true">
+          <template v-slot:append>
+            <span>{{ turnTimeLimit }}</span>
+          </template>
+        </v-slider>
+        <h2 class="text-left mb-2">Decks</h2>
+        <v-list color="blue" max-height="310" style="overflow-y: auto">
+          <v-list-item-group
+            v-model="selectedDecks"
+            multiple
+            :disabled="true"
+          >
+            <template v-for="(deck, i) in decks">
+              <v-divider
+                v-if="!deck"
+                :key="`deck-divider-${i}`"
+              ></v-divider>
+              <v-list-item
+                v-else
+                :key="`deck-${i}`"
+                :value="deck.uuid"
+                active-class="text--accent-4"
+                :disabled="!userIsOwner"
+              >
+                <template v-slot:default="{ active, toggle }">
+                  <v-list-item-content>
+                    <v-list-item-title v-text="deck.deckName"></v-list-item-title>
+                  </v-list-item-content>
+                  <v-list-item-action>
+                    <v-checkbox
+                      :input-value="active"
+                      :true-value="deck.uuid"
+                      color="accent-4"
+                      @click="userIsOwner ? toggle : null"
+                    ></v-checkbox>
+                  </v-list-item-action>
+                </template>
+              </v-list-item>
             </template>
-          </v-slider>
-          <v-slider
-            v-model="maxScore"
-            label="Max Score (Game Winning Score)"
-            :disabled="!userIsOwner"
-            :max="15"
-            :min="1"
-            :tick-size="1"
-            :ticks="true">
-            <template v-slot:append>
-              <span>{{ maxScore }}</span>
-            </template>
-          </v-slider>
-          <v-slider
-            v-model="turnTimeLimit"
-            label="Turn Time Limit (seconds)"
-            :disabled="!userIsOwner"
-            :max="120"
-            :min="15"
-            :step="5"
-            :tick-size="5"
-            :ticks="true">
-            <template v-slot:append>
-              <span>{{ turnTimeLimit }}</span>
-            </template>
-          </v-slider>
-          <h2 class="text-left mb-2">Decks</h2>
-          <v-list color="blue" max-height="310" style="overflow-y: auto">
-            <v-list-item-group
-              v-model="selectedDecks"
-              multiple
-              :disabled="true"
-            >
-              <template v-for="(deck, i) in decks">
-                <v-divider
-                  v-if="!deck"
-                  :key="`deck-divider-${i}`"
-                ></v-divider>
-                <v-list-item
-                  v-else
-                  :key="`deck-${i}`"
-                  :value="deck.uuid"
-                  active-class="text--accent-4"
-                  :disabled="!userIsOwner"
-                >
-                  <template v-slot:default="{ active, toggle }">
-                    <v-list-item-content>
-                      <v-list-item-title v-text="deck.deckName"></v-list-item-title>
-                    </v-list-item-content>
-                    <v-list-item-action>
-                      <v-checkbox
-                        :input-value="active"
-                        :true-value="deck.uuid"
-                        color="accent-4"
-                        @click="userIsOwner ? toggle : null"
-                      ></v-checkbox>
-                    </v-list-item-action>
-                  </template>
-                </v-list-item>
-              </template>
-            </v-list-item-group>
-          </v-list>
-        </v-form>
-      </v-card-text>
-      <v-divider></v-divider>
-      <v-card-actions v-if="userIsOwner">
-        <v-spacer></v-spacer>
-        <v-btn text color="red" @click="clear" v-if="!gameConfig">Clear</v-btn>
-        <v-btn color="primary" @click="gameConfig ? update() : create()">{{ !!this.gameConfig ?  'Update' : 'Create'}}</v-btn>
-      </v-card-actions>
-    </v-card>
-  </v-container>
+          </v-list-item-group>
+        </v-list>
+      </v-form>
+    </v-card-text>
+    <v-divider></v-divider>
+    <v-card-actions v-if="userIsOwner">
+      <v-spacer></v-spacer>
+      <v-btn text color="red" @click="clear" v-if="!gameConfig">Clear</v-btn>
+      <v-btn color="primary" @click="gameConfig ? update() : create()">{{ !!this.gameConfig ?  'Update' : 'Create'}}</v-btn>
+    </v-card-actions>
+  </v-card>
 </template>
 
 <script>

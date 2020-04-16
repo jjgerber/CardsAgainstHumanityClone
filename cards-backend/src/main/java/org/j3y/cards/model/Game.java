@@ -192,19 +192,6 @@ public class Game {
                 .orElse(null);
     }
 
-    public Player getGameWinner() {
-        int topScore = getTopScore();
-
-        if (topScore != gameConfig.getMaxScore()) {
-            return null;
-        }
-
-        return players.stream()
-                .filter(player -> player.getScore() == topScore)
-                .findFirst()
-                .orElse(null);
-    }
-
     public boolean isGameFull() {
         return players.size() >= gameConfig.getMaxPlayers();
     }

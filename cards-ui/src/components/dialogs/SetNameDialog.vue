@@ -30,7 +30,7 @@
           <p>
             Set your desired username:
           </p>
-           <v-text-field v-model="userName" @keypress.enter="setNewName" />
+           <v-text-field :autofocus="true" :clearable="true" v-model="userName" @keypress.enter="setNewName" />
         </v-card-text>
 
         <v-divider></v-divider>
@@ -84,6 +84,8 @@ export default {
     dialog () {
       if (this.dialog === false) {
         this.$emit('input', false)
+      } else {
+        this.userName = this.playerInfo.playerName;
       }
     }
   },
@@ -94,7 +96,7 @@ export default {
         this.dialog = false
       }).catch((error) => {
         this.error = error
-      })
+      });
     },
 
     cancel () {

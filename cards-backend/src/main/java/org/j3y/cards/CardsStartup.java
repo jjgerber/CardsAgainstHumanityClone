@@ -46,11 +46,11 @@ public class CardsStartup implements ApplicationListener<ApplicationReadyEvent> 
     }
 
     private void createDeck(String deckName) throws IOException {
-
         CardDeck deck = new CardDeck();
         deck.setUuid(UUID.randomUUID().toString());
         deck.setDeckName(deckName);
         File file = ResourceUtils.getFile("classpath:maincahdeck.csv");
+        //File file = new File("/home/cards/maincahdeck.csv");
 
 
         CsvMapper mapper = new CsvMapper();
@@ -71,14 +71,12 @@ public class CardsStartup implements ApplicationListener<ApplicationReadyEvent> 
                 card.setOwningDeck(deck);
                 card.setText(cardText);
                 card.setNumPhrases(numPhrases);
-                //cardRepository.save(card);
                 deck.getCardSet().add(card);
             } else {
                 Phrase phrase = new Phrase();
                 phrase.setUuid(UUID.randomUUID().toString());
                 phrase.setOwningDeck(deck);
                 phrase.setText(cardText);
-                //phraseRepository.save(phrase);
                 deck.getPhraseSet().add(phrase);
             }
         }

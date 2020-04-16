@@ -19,17 +19,20 @@ public class DefaultGameStateTimeoutService implements GameStateTimeoutService {
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
-    private final GameService gameService;
+    private final GameStateService gameStateService;
+    private final GameWebsocketService gameWebsocketService;
     private final int winnerTimeout;
     private final int gameOverTimeout;
 
     @Autowired
     public DefaultGameStateTimeoutService(
-            @Lazy final GameService gameService,
+            @Lazy final GameStateService gameStateService,
+            final GameWebsocketService gameWebsocketService,
             @Value("${game.winner-timeout}") final int winnerTimeout,
             @Value("${game.game-over-timeout}") final int gameOverTimeout
     ) {
-        this.gameService = gameService;
+        this.gameStateService = gameStateService;
+        this.gameWebsocketService = gameWebsocketService;
         this.winnerTimeout = winnerTimeout;
         this.gameOverTimeout = gameOverTimeout;
     }
@@ -42,12 +45,12 @@ public class DefaultGameStateTimeoutService implements GameStateTimeoutService {
         ZonedDateTime timeoutTime = ZonedDateTime.now(ZoneOffset.UTC).plusSeconds(turnTimeoutSeconds);
         logger.info("Now Choosing - Timer set for {} seconds for state timeout.", turnTimeoutSeconds);
         game.setGameTimeoutTime(timeoutTime);
-        gameService.sendGameUpdate(game);
+        gameWebsocketService.sendGameUpdate(game);
         Thread.sleep(turnTimeoutMs);
 
-        if (game.getGameState() == GameState.CHOOSING) {
+        if (game.getGameState() == GameState.CHOOSING && timeoutTime.isEqual(game.getGameTimeoutTime())) {
             logger.info("Game State Timed Out - state 'CHOOSING' took over {} seconds.", turnTimeoutSeconds);
-            gameService.setStateDoneChoosing(game);
+            gameStateService.setStateDoneChoosing(game);
         }
     }
 
@@ -58,40 +61,43 @@ public class DefaultGameStateTimeoutService implements GameStateTimeoutService {
         ZonedDateTime timeoutTime = ZonedDateTime.now(ZoneOffset.UTC).plusSeconds(turnTimeoutSeconds);
         logger.info("Now Judging - Timer set for {} seconds for state timeout.", turnTimeoutSeconds);
         game.setGameTimeoutTime(timeoutTime);
-        gameService.sendGameUpdate(game, Views.Judging.class);
+        gameWebsocketService.sendGameUpdate(game, Views.Judging.class);
         Thread.sleep(turnTimeoutMs);
 
-        if (game.getGameState() == GameState.JUDGING) {
+        if (game.getGameState() == GameState.JUDGING && timeoutTime.isEqual(game.getGameTimeoutTime())) {
             logger.info("Game State Timed Out - state 'JUDGING' took over {} seconds.", turnTimeoutSeconds);
-            gameService.setStateDoneJudging(game);
+            gameStateService.setStateDoneJudging(game);
         }
     }
 
     @Override
     public void setDoneJudgingTimeout(Game game) throws InterruptedException {
-        ZonedDateTime timeoutTime = ZonedDateTime.now(ZoneOffset.UTC).plusSeconds(winnerTimeout / 1000);
-        logger.info("Now Done Judging - Timer set for {} millseconds for state timeout.", winnerTimeout);
+        ZonedDateTime timeoutTime = ZonedDateTime.now(ZoneOffset.UTC).plusSeconds(winnerTimeout);
+        logger.info("Now Done Judging - Timer set for {} seconds for state timeout.", winnerTimeout);
         game.setGameTimeoutTime(timeoutTime);
-        gameService.sendGameUpdate(game, Views.Judging.class);
-        Thread.sleep(winnerTimeout);
+        gameWebsocketService.sendGameUpdate(game, Views.Judging.class);
+        Thread.sleep(winnerTimeout * 1000);
 
-        if (game.getGameState() == GameState.DONE_JUDGING) {
-            logger.info("Game State Timed Out - state 'DONE_JUDGING' took over {} ms.", winnerTimeout);
+        if (game.getGameState() == GameState.DONE_JUDGING && timeoutTime.isEqual(game.getGameTimeoutTime())) {
+            logger.info("Game State Timed Out - state 'DONE_JUDGING' took over {} seconds.", winnerTimeout);
             if (game.hasGameWinner()) {
-                gameService.setStateGameOver(game);
+                gameStateService.setStateGameOver(game);
             } else {
-                gameService.setStateChoosing(game);
+                gameStateService.setStateChoosing(game);
             }
         }
     }
 
     @Override
     public void setGameOverTimeout(Game game) throws InterruptedException {
-        gameService.sendGameUpdate(game);
-        Thread.sleep(gameOverTimeout);
+        ZonedDateTime timeoutTime = ZonedDateTime.now(ZoneOffset.UTC).plusSeconds(gameOverTimeout);
+        logger.info("Now Game Over - Timer set for {} seconds for state timeout.", winnerTimeout);
+        game.setGameTimeoutTime(timeoutTime);
+        gameWebsocketService.sendGameUpdate(game);
+        Thread.sleep(gameOverTimeout * 1000);
 
-        if (game.getGameState() == GameState.GAME_OVER) {
-            gameService.setStateLobby(game);
+        if (game.getGameState() == GameState.GAME_OVER && timeoutTime.isEqual(game.getGameTimeoutTime())) {
+            gameStateService.setStateLobby(game);
         }
     }
 

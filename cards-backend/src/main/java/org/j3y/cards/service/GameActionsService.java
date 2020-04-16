@@ -6,13 +6,7 @@ import org.j3y.cards.model.Player;
 
 import java.util.List;
 
-public interface GameService {
-    Game getGameByName(String name) throws InterruptedException;
-    List<Game> getAllGames();
-
-    void sendGameUpdate(Game game);
-    void sendGameUpdate(Game game, Class view);
-
+public interface GameActionsService {
     Game createGame(String name, Player owner, GameConfig gameConfig) throws InterruptedException;
     Game startGame(Game game, Player requestingPlayer) throws InterruptedException;
     Game pickPhrasesForCard(Game game, List<String> selectedPhrasesIds, Player selectingPlayer) throws InterruptedException;
@@ -20,11 +14,5 @@ public interface GameService {
     Game joinGame(Game game, Player joiningPlayer) throws InterruptedException;
     Game leaveGame(Game game, Player leavingPlayer) throws InterruptedException;
     Game updateGame(Game game, Player updatingPlayer, GameConfig newGameConfig) throws InterruptedException;
-
-    void setStateChoosing(Game game) throws InterruptedException;
-    void setStateDoneChoosing(Game game) throws InterruptedException;
-    void setStateDoneJudging(Game game) throws InterruptedException;
-    void setStateGameOver(Game game) throws InterruptedException;
-    void setStateLobby(Game game) throws InterruptedException;
-
+    void manageAllPlayersPhrases(Game game);
 }
