@@ -1,6 +1,13 @@
 .gradle
-/build/
+build
 !gradle/wrapper/gradle-wrapper.jar
+
+# Frontend Ignores
+/cards-ui/node_modules
+/cards-ui/dist
+
+# Backend Ignores
+/cards-backend/src/main/webapp/*
 
 ### STS ###
 .apt_generated
