@@ -16,7 +16,7 @@ export default {
 
     setName (newName) {
       return new Promise((resolve, reject) => {
-        axios.post(`/api/v1/player/name/${newName}`).then((response) => {
+        axios.post(`/api/v1/player/name`, newName, { headers: { 'Content-Type': 'text/plain' } }).then((response) => {
           mutations.setPlayerInfo(response.data)
           this.$emit('input', false)
           resolve()

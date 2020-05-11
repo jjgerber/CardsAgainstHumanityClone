@@ -4,54 +4,63 @@
       v-model="dialog"
       width="500"
     >
-      <template v-slot:activator="{ on }">
-        <v-btn
-          color="red lighten-2"
-          dark
-          v-on="on"
-        >
-          Click Me
-        </v-btn>
-      </template>
-
-      <v-card color="grey darken-3">
-        <v-card-title
-          class="headline"
-          primary-title
-        >
-          Set Player Name
-        </v-card-title>
-
-        <v-slide-y-reverse-transition>
-          <v-alert v-if="error" type="error">{{ error }}</v-alert>
-        </v-slide-y-reverse-transition>
-
-        <v-card-text>
-          <p>
-            Set your desired username:
-          </p>
-           <v-text-field :autofocus="true" :clearable="true" v-model="userName" @keypress.enter="setNewName" />
-        </v-card-text>
-
-        <v-divider></v-divider>
-        <v-card-actions>
-          <v-spacer></v-spacer>
+      <v-form ref="form" v-model="valid">
+        <template v-slot:activator="{ on }">
           <v-btn
-            color="red"
-            text
-            @click="cancel()"
+            color="red lighten-2"
+            dark
+            v-on="on"
           >
-            Cancel
+            Click Me
           </v-btn>
-          <v-btn
-            color="primary"
-            text
-            @click="setNewName()"
+        </template>
+
+        <v-card color="grey darken-3">
+          <v-card-title
+            class="headline"
+            primary-title
           >
-            Accept Change
-          </v-btn>
-        </v-card-actions>
-      </v-card>
+            Set Player Name
+          </v-card-title>
+
+          <v-slide-y-reverse-transition>
+            <v-alert v-if="error" type="error">{{ error }}</v-alert>
+          </v-slide-y-reverse-transition>
+
+          <v-card-text>
+            <p>
+              Set your desired username:
+            </p>
+             <v-text-field
+               :rules="[v => /^[a-zA-Z0-9 ]{1,20}$/.test(v) || 'Numbers and letters only. Required.']"
+               maxlength="20"
+               counter
+               :autofocus="true"
+               v-model="userName"
+               @keypress.enter="setNewName" />
+          </v-card-text>
+
+          <v-divider></v-divider>
+          <v-card-actions>
+            <v-spacer></v-spacer>
+            <v-btn
+              color="red"
+              text
+              @click="cancel()"
+            >
+              Cancel
+            </v-btn>
+            <v-btn
+              color="primary"
+              text
+              @click="setNewName()"
+              :disabled="!valid"
+            >
+              Accept Change
+            </v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-form>
     </v-dialog>
   </div>
 </template>
@@ -72,7 +81,8 @@ export default {
     return {
       dialog: this.value,
       userName: '',
-      error: null
+      error: null,
+      valid: true
     }
   },
 
@@ -92,11 +102,15 @@ export default {
 
   methods: {
     setNewName () {
-      this.setName(this.userName).then(() => {
-        this.dialog = false
-      }).catch((error) => {
-        this.error = error
-      });
+      this.$refs.form.validate()
+      if (this.valid) {
+        this.setName(this.userName).then(() => {
+          this.error = null;
+          this.dialog = false;
+        }).catch((error) => {
+          this.error = error.response.data.message;
+        });
+      }
     },
 
     cancel () {

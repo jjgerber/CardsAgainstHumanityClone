@@ -14,7 +14,7 @@ public class Player implements Authentication {
     private String playerName;
 
     @JsonView(Views.Limited.class)
-    private String name;
+    private final String name;
 
     @JsonIgnore private Game currentGame;
 
@@ -96,10 +96,6 @@ public class Player implements Authentication {
 
     public Semaphore getMutex() {
         return mutex;
-    }
-
-    public void setMutex(Semaphore mutex) {
-        this.mutex = mutex;
     }
 
     @Override

@@ -192,7 +192,7 @@
 
         </div>
 
-        {{ game }}
+        <!-- {{ game }} -->
       </v-col>
     </v-row>
   </v-container>
@@ -454,7 +454,7 @@
   .card-group:hover .v-card {
     user-select:  none;
     background-color: rgba(0,0,0,0.2);
-    box-shadow: 0px 0px 10px 10px rgba(255,255,255,0.2);
+    box-shadow: 0 0 10px 10px rgba(255,255,255,0.2);
     transition: 0.2s;
   }
   .card-group .v-card {

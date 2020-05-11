@@ -15,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 
+import javax.validation.Valid;
 import java.util.Collection;
 import java.util.List;
 
@@ -22,6 +23,8 @@ import java.util.List;
 @RestController
 @RequestMapping(path = "/api/v1/games")
 public class GameController extends BaseController {
+
+    private static final String GAME_NAME_REGEX = "^[a-zA-Z0-9 ]{1,20}$";
 
     private final GameManagementService gameManagementService;
     private final GameActionsService gameActionsService;
@@ -56,13 +59,16 @@ public class GameController extends BaseController {
 
     @JsonView(Views.Full.class)
     @PostMapping(value = "/{name}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public Game createGame(@PathVariable String name, @RequestBody GameConfig gameConfig) throws InterruptedException {
+    public Game createGame(@PathVariable String name, @RequestBody @Valid GameConfig gameConfig) throws InterruptedException {
+        if (name == null || !name.matches(GAME_NAME_REGEX)) {
+            throw new InvalidActionException("Game name was invalid.");
+        }
         return gameActionsService.createGame(name, getPlayer(), gameConfig);
     }
 
     @JsonView(Views.Full.class)
     @PutMapping(value = "/{name}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public Game updateGame(@PathVariable String name, @RequestBody GameConfig gameConfig) throws InterruptedException {
+    public Game updateGame(@PathVariable String name, @RequestBody @Valid GameConfig gameConfig) throws InterruptedException {
         Game game = gameManagementService.getGameByName(name);
         if (game == null) {
             throw new GameNotFoundException();

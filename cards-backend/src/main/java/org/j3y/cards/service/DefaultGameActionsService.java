@@ -285,10 +285,6 @@ public class DefaultGameActionsService implements GameActionsService {
             leavingPlayer.setCurrentGame(null);
             if (leavingPlayer.getPhrases() != null && game.getPhraseSet() != null) {
                 returnPlayersPhrases(game, leavingPlayer);
-
-                // take selected phrases back - we have confirmed that they haven't been judged yet above.
-                game.getPhraseSet().addAll(leavingPlayer.getSelectedPhrases());
-                leavingPlayer.getSelectedPhrases().clear(); // sanity check - clear these out
             }
 
             if (isLastPlayerInGame) {
@@ -346,6 +342,7 @@ public class DefaultGameActionsService implements GameActionsService {
         game.getPhraseSet().addAll(player.getPhrases());
         game.getPhraseSet().addAll(player.getSelectedPhrases());
         player.getPhrases().clear();
+        player.getSelectedPhrases().clear();
     }
 
     private void populateCardsAndPhrasesByDeckIds(List<String> deckIds, Set<Card> cards, Set<Phrase> phrases) {
@@ -387,6 +384,7 @@ public class DefaultGameActionsService implements GameActionsService {
         int numPhrasesToGet = 10 - player.getPhrases().size();
         numPhrasesToGet = Math.min(numPhrasesToGet, game.getPhraseSet().size());
         List<Phrase> list = new ArrayList<>(game.getPhraseSet());
+        Collections.shuffle(list);
         Set<Phrase> randomSet = new HashSet<>(list.subList(0, numPhrasesToGet));
         game.getPhraseSet().removeAll(randomSet);
         player.getPhrases().addAll(randomSet);

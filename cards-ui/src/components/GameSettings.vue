@@ -1,10 +1,13 @@
 <template>
   <v-card>
     <v-card-text>
-      <v-form>
+      <v-form ref="form" v-model="valid">
         <v-text-field
           :disabled="!!gameConfig"
           v-model="name"
+          :maxlength="20"
+          counter
+          :rules="[v => /^[a-zA-Z0-9 ]{1,20}$/.test(v) || 'Numbers and letters only. Required.']"
           label="Lobby Name"
         />
         <v-slider
@@ -86,7 +89,7 @@
     <v-card-actions v-if="userIsOwner">
       <v-spacer></v-spacer>
       <v-btn text color="red" @click="clear" v-if="!gameConfig">Clear</v-btn>
-      <v-btn color="primary" @click="gameConfig ? update() : create()">{{ !!this.gameConfig ?  'Update' : 'Create'}}</v-btn>
+      <v-btn color="primary" :disabled="!valid" @click="gameConfig ? update() : create()">{{ !!this.gameConfig ?  'Update' : 'Create'}}</v-btn>
     </v-card-actions>
   </v-card>
 </template>
@@ -114,7 +117,8 @@
 
     data () {
       return {
-        name: this.gameName,
+        valid: true,
+        name: this.gameName || '',
         maxPlayers: this.gameConfig ? this.gameConfig.maxPlayers : 6,
         maxScore: this.gameConfig ? this.gameConfig.maxScore : 5,
         turnTimeLimit: this.gameConfig ? this.gameConfig.turnTimeout : 60,
@@ -153,12 +157,19 @@
       },
 
       create () {
-        this.callCreateGame(this.name, this.maxPlayers, this.maxScore, this.turnTimeLimit, this.selectedDecks)
-        this.$router.push(`/game/${this.name}`)
+        if (this.valid) {
+          this.callCreateGame(this.name, this.maxPlayers, this.maxScore, this.turnTimeLimit, this.selectedDecks).then(() => {
+            this.$router.push(`/game/${this.name}`)
+          })
+            .catch((error) => {
+              this.error = error.response.body.message;
+            });
+        }
       },
 
       update () {
-        this.callUpdateGame(this.name, this.maxPlayers, this.maxScore, this.turnTimeLimit, this.selectedDecks)
+        if (this.valid)
+          this.callUpdateGame(this.name, this.maxPlayers, this.maxScore, this.turnTimeLimit, this.selectedDecks)
       }
     }
   }

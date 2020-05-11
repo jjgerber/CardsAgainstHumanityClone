@@ -2,18 +2,33 @@ package org.j3y.cards.model;
 
 import com.fasterxml.jackson.annotation.JsonView;
 
+import javax.validation.constraints.Max;
+import javax.validation.constraints.Min;
+import javax.validation.constraints.Size;
 import java.util.List;
 
 public class GameConfig {
     @JsonView(Views.Limited.class)
+    @Size(min = 1)
     private List<String> deckIds;
+
     @JsonView(Views.Limited.class)
+    @Size(min = 1)
     private List<String> deckNames;
+
     @JsonView(Views.Limited.class)
+    @Min(15)
+    @Max(120)
     private int turnTimeout;
+
     @JsonView(Views.Limited.class)
+    @Min(3)
+    @Max(10)
     private int maxPlayers;
+
     @JsonView(Views.Limited.class)
+    @Min(1)
+    @Max(15)
     private int maxScore;
 
     public List<String> getDeckIds() {
