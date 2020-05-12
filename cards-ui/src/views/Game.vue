@@ -57,73 +57,71 @@
           </v-slide-y-reverse-transition>
 
           <h2 class="text-capitalize text-left">Status: {{ gameStateFormatted }}</h2>
-          <v-slide-y-reverse-transition>
-            <game-settings :game-name="gameName" :game-config="game.gameConfig" :user-is-owner="playerIsOwner" v-if="isLobby"/>
-            <div v-else-if="isStateGameOver">
-              <v-alert type="success">{{ gameWinner.playerName }} has reached score {{ gameWinner.score }} and won the game!</v-alert>
-            </div>
-            <v-row v-else>
-              <v-col cols="auto" class="text-center align-center">
-                <v-card>
-                  <v-card-text v-if="!!currentCard">
-                    <v-card color="black" class="game-card pa-2 text-center align-center d-inline-flex" raised>
-                      <v-card-text class="pa-0" style="height: 100%">{{ currentCard.text }}</v-card-text>
-                    </v-card>
-                  </v-card-text>
-                </v-card>
-              </v-col>
-              <v-col>
-                <v-card>
-                  <v-card-text class="text-center">
-                    <v-alert v-if="judgeDidntChoose && game.phraseSelections.length === 0" mode="out-in" type="error">No players chose a phrase to be judged.</v-alert>
-                    <v-alert v-else-if="judgeDidntChoose && game.phraseSelections.length > 0" mode="out-in" type="error">The judge didn't choose a winner in time. Your cards have been returned.</v-alert>
-                    <v-alert v-else-if="playerIsJudge && isStateJudging && judgeSelection != null" mode="out-in" color="grey" text dense>
-                      Confirm your selection? <v-btn color="green" @click="confirmJudgement()">Confirm</v-btn>
-                    </v-alert>
-                    <v-alert v-else-if="playerIsJudge && isStateJudging" mode="out-in" color="grey" text>Choose the winner.</v-alert>
-                    <v-alert v-else-if="isStateDoneJudging && judgeChoice !== null" mode="out-in" class="text-center" type="success">
-                      Player {{ game.lastWinningPlayer.playerName }} won!
-                      They have {{ game.lastWinningPlayer.score }} point{{ game.lastWinningPlayer.score > 1 ? 's' : ''}}.
-                    </v-alert>
-                    <v-container fluid class="pa-0">
-                      <v-row v-if="isStateChoosing">
-                        <!-- In Choosing Mode -->
-                        <v-col class="text-center" v-for="chosen in game.numPlayersSelectedPhrases" :key="`choices-${chosen}`">
-                          <div class="card-group text-center d-inline">
-                            <v-card
-                              v-for="card in currentCard.numPhrases" :key="`phrase-${chosen}-${card}`"
-                              color="white"
-                              light
-                              class="game-card pa-2 text-center align-center d-inline-flex ma-1"
-                              raised
-                            >
-                            </v-card>
-                          </div>
-                        </v-col>
-                      </v-row>
-                      <v-row v-else>
-                        <!-- In Judging Mode -->
-                        <v-col class="text-center" v-for="(phraseSelection, idx) in game.phraseSelections" :key="`phrases-${idx}`">
-                          <div class="card-group text-center d-inline">
-                            <v-card
-                              v-for="(phrase, phraseIdx) in phraseSelection" :key="`phrase-${idx}-${phraseIdx}`"
-                              :color="isStateDoneJudging && judgeChoice  === idx || judgeSelection === idx ? 'green lighten-3' : 'white'"
-                              light
-                              class="game-card pa-2 text-center align-center d-inline-flex ma-1"
-                              raised
-                              @click="judgeClicked(idx)"
-                            >
-                              <v-card-text class="pa-0" style="height: 100%">{{ phrase.text }}</v-card-text>
-                            </v-card>
-                          </div>
-                        </v-col>
-                      </v-row>
-                    </v-container>
-                  </v-card-text>
-                </v-card>
-              </v-col>
-            </v-row>
-          </v-slide-y-reverse-transition>
+          <game-settings :game-name="gameName" :game-config="game.gameConfig" :user-is-owner="playerIsOwner" v-if="isLobby"/>
+          <div v-else-if="isStateGameOver">
+            <v-alert color="green">{{ gameWinner.playerName }} has reached score {{ gameWinner.score }} and won the game!</v-alert>
+          </div>
+          <v-row v-else>
+            <v-col cols="auto" class="text-center align-center">
+              <v-card>
+                <v-card-text v-if="!!currentCard">
+                  <v-card color="black" class="game-card pa-2 text-center align-center d-inline-flex" raised>
+                    <v-card-text class="pa-0" style="height: 100%">{{ currentCard.text }}</v-card-text>
+                  </v-card>
+                </v-card-text>
+              </v-card>
+            </v-col>
+            <v-col>
+              <v-card>
+                <v-card-text class="text-center">
+                  <v-alert v-if="judgeDidntChoose && game.phraseSelections.length === 0" mode="out-in" type="error">No players chose a phrase to be judged.</v-alert>
+                  <v-alert v-else-if="judgeDidntChoose && game.phraseSelections.length > 0" mode="out-in" type="error">The judge didn't choose a winner in time. Your cards have been returned.</v-alert>
+                  <v-alert v-else-if="playerIsJudge && isStateJudging && judgeSelection != null" mode="out-in" color="grey" text dense>
+                    Confirm your selection? <v-btn color="green" @click="confirmJudgement()">Confirm</v-btn>
+                  </v-alert>
+                  <v-alert v-else-if="playerIsJudge && isStateJudging" mode="out-in" color="grey" text>Choose the winner.</v-alert>
+                  <v-alert v-else-if="isStateDoneJudging && judgeChoice !== null" mode="out-in" class="text-center" color="green">
+                    Player {{ game.lastWinningPlayer.playerName }} won!
+                    They have {{ game.lastWinningPlayer.score }} point{{ game.lastWinningPlayer.score > 1 ? 's' : ''}}.
+                  </v-alert>
+                  <v-container fluid class="pa-0">
+                    <v-row v-if="isStateChoosing">
+                      <!-- In Choosing Mode -->
+                      <v-col class="text-center" v-for="chosen in game.numPlayersSelectedPhrases" :key="`choices-${chosen}`">
+                        <div class="card-group text-center d-inline">
+                          <v-card
+                            v-for="card in currentCard.numPhrases" :key="`phrase-${chosen}-${card}`"
+                            color="white"
+                            light
+                            class="game-card pa-2 text-center align-center d-inline-flex ma-1"
+                            raised
+                          >
+                          </v-card>
+                        </div>
+                      </v-col>
+                    </v-row>
+                    <v-row v-else>
+                      <!-- In Judging Mode -->
+                      <v-col class="text-center" v-for="(phraseSelection, idx) in game.phraseSelections" :key="`phrases-${idx}`">
+                        <div class="card-group text-center d-inline">
+                          <v-card
+                            v-for="(phrase, phraseIdx) in phraseSelection" :key="`phrase-${idx}-${phraseIdx}`"
+                            :color="isStateDoneJudging && judgeChoice  === idx || judgeSelection === idx ? 'green lighten-3' : 'white'"
+                            light
+                            class="game-card pa-2 text-center align-center d-inline-flex ma-1"
+                            raised
+                            @click="judgeClicked(idx)"
+                          >
+                            <v-card-text class="pa-0" style="height: 100%">{{ phrase.text }}</v-card-text>
+                          </v-card>
+                        </div>
+                      </v-col>
+                    </v-row>
+                  </v-container>
+                </v-card-text>
+              </v-card>
+            </v-col>
+          </v-row>
 
           <v-scroll-y-transition>
             <div class="mt-4" v-if="playerPhrases && playerPhrases.length > 0">

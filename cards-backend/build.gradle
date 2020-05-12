@@ -12,20 +12,20 @@ repositories {
 }
 
 dependencies {
-	implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-csv'
-	implementation 'org.apache.commons:commons-collections4:4.+'
-	implementation 'org.apache.commons:commons-text:1.8+'
-	implementation 'io.springfox:springfox-swagger2:+'
+    implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-csv'
+    implementation 'org.apache.commons:commons-collections4:4.+'
+    implementation 'org.apache.commons:commons-text:1.8+'
+    implementation 'io.springfox:springfox-swagger2:+'
 
-	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
-	implementation 'org.springframework.boot:spring-boot-starter-security'
-	implementation 'org.springframework.boot:spring-boot-starter-web'
-	implementation 'org.springframework.boot:spring-boot-starter-websocket'
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-websocket'
 
     runtime 'com.h2database:h2:1.4.197'
-	runtime 'javax.xml.bind:jaxb-api:2.3.+'
-	runtime 'org.xmlbeam:xmlprojector:1.4.16'
-	runtime 'io.springfox:springfox-swagger-ui:+'
+    runtime 'javax.xml.bind:jaxb-api:2.3.+'
+    runtime 'org.xmlbeam:xmlprojector:1.4.16'
+    runtime 'io.springfox:springfox-swagger-ui:+'
 
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
 }

@@ -1,17 +1,17 @@
 plugins {
-	id "com.github.node-gradle.node" version "2.2.3"
+    id "com.github.node-gradle.node" version "2.2.3"
 }
 
 node {
-	download = true
+    download = true
 }
 
 task buildVue(type: YarnTask, dependsOn: yarn_install) {
-	group = "build"
-	description = "Generate the client app and export the files to the server."
+    group = "build"
+    description = "Generate the client app and export the files to the server."
 
-	inputs.dir file ("$rootDir/cards-ui")
-	outputs.dir file("$rootDir/cards-backend/src/main/webapp")
+    inputs.dir file ("$rootDir/cards-ui")
+    outputs.dir file("$rootDir/cards-backend/src/main/webapp")
 
-	args = ["build"]
+    args = ["build"]
 }
