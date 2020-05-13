@@ -7,7 +7,7 @@ public interface GameWebsocketService {
 
     void sendPlayerUpdate(Player player);
     void sendGameUpdate(Game game);
-    void sendGameUpdate(Game game, Class view);
+    void sendGameChatMessage(Game game, String message);
     void sendLobbiesUpdate();
 
 }

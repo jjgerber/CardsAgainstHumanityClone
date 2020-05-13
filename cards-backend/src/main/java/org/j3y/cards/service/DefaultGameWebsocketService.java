@@ -2,6 +2,7 @@ package org.j3y.cards.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.j3y.cards.model.ChatMessage;
 import org.j3y.cards.model.Game;
 import org.j3y.cards.model.Player;
 import org.j3y.cards.model.Views;
@@ -10,8 +11,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
-
-import java.util.Collection;
 
 @Service
 public class DefaultGameWebsocketService implements GameWebsocketService {
@@ -48,23 +47,16 @@ public class DefaultGameWebsocketService implements GameWebsocketService {
 
     @Override
     public void sendGameUpdate(Game game) {
-        sendGameUpdate(game, Views.Full.class);
-    }
-
-    @Override
-    public void sendGameUpdate(Game game, Class view) {
-        String gameJson = "{}";
-
-        if (game != null) {
-            try {
-                gameJson = mapper.writerWithView(view).writeValueAsString(game);
-            } catch (JsonProcessingException e) {
-                logger.error("Error converting game to JSON: {}", e.getMessage(), e);
-            }
-        }
+        String gameJson = gameManagementService.getGameJson(game);
 
         logger.info("Sending Game Update: {}", gameJson);
         this.simpTemplate.convertAndSend("/topic/game/" + game.getName(), gameJson);
+    }
+
+    @Override
+    public void sendGameChatMessage(Game game, String message) {
+        ChatMessage chatMessage = new ChatMessage("SERVER","Game", message );
+        this.simpTemplate.convertAndSend("/topic/chat/" + game.getName(), chatMessage);
     }
 
     @Override
@@ -78,4 +70,6 @@ public class DefaultGameWebsocketService implements GameWebsocketService {
         logger.info("Sending Lobby Update: {}", gamesJson);
         this.simpTemplate.convertAndSend("/topic/lobbies", gamesJson);
     }
+
+
 }

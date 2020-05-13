@@ -2,18 +2,15 @@ package org.j3y.cards.model;
 
 import com.fasterxml.jackson.annotation.JsonView;
 
-import javax.persistence.CascadeType;
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.OneToMany;
+import javax.persistence.*;
 import java.util.HashSet;
 import java.util.Set;
 
 @Entity
 public class CardDeck {
-
     @Id
     @JsonView(Views.Limited.class)
+    @Column(length = 36)
     private String uuid;
 
     @JsonView(Views.Limited.class)

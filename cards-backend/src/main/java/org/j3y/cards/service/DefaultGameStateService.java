@@ -44,12 +44,19 @@ public class DefaultGameStateService implements GameStateService {
             game.getPhraseSelections().clear();
             game.setJudgeChoiceWinner(null);
 
-            // Sort out the judge
             Player lastJudgingPlayer = game.getJudgingPlayer();
-            int nextPlayerIdx = (game.getPlayers().indexOf(lastJudgingPlayer) + 1) % game.getPlayers().size();
-            Player nextJudgingPlayer = game.getPlayers().get(nextPlayerIdx);
+            Player nextJudgingPlayer;
+            if (lastJudgingPlayer == null) {
+                // No one is currently the judge. Pick a random person.
+                nextJudgingPlayer = CollectionUtil.getRandomItemFromCollection(game.getPlayers());
+            } else {
+                int nextPlayerIdx = (game.getPlayers().indexOf(lastJudgingPlayer) + 1) % game.getPlayers().size();
+                nextJudgingPlayer = game.getPlayers().get(nextPlayerIdx);
+            }
+
             game.setJudgingPlayer(nextJudgingPlayer);
             game.setCurrentCard(CollectionUtil.getRandomItemFromCollection(game.getCardSet()));
+            game.getCardSet().remove(game.getCurrentCard());
 
             // Give players more cards if they need them.
            gameActionsService.manageAllPlayersPhrases(game);
@@ -113,6 +120,7 @@ public class DefaultGameStateService implements GameStateService {
             } else {
                 winner.incrementScore();
                 game.setLastWinningPlayer(winner);
+                gameWebsocketService.sendGameChatMessage(game, winner.getPlayerName() + " has won the round.");
             }
 
             for (Player player : game.getPlayers()) {

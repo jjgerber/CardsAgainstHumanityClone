@@ -4,11 +4,11 @@ import org.j3y.cards.exception.GameAlreadyExistsException;
 import org.j3y.cards.exception.InvalidActionException;
 import org.j3y.cards.exception.WrongGameStateException;
 import org.j3y.cards.model.*;
-import org.j3y.cards.util.CollectionUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -93,13 +93,9 @@ public class DefaultGameActionsService implements GameActionsService {
             populateCardsAndPhrasesByDeckIds(game.getGameConfig().getDeckIds(), cards, phrases);
             game.setCardSet(cards);
             game.setPhraseSet(phrases);
-
-            Player startingPlayer = CollectionUtil.getRandomItemFromCollection(game.getPlayers());
-            Card startingCard = CollectionUtil.getRandomItemFromCollection(game.getCardSet());
-
-            game.setJudgingPlayer(startingPlayer);
-            game.setCurrentCard(startingCard);
             manageAllPlayersPhrases(game);
+
+            gameWebsocketService.sendGameChatMessage(game, "Game has started!");
         } finally {
             game.getMutex().release(); // Release lock.
         }
@@ -224,7 +220,9 @@ public class DefaultGameActionsService implements GameActionsService {
 
             if (game.getGameState() != GameState.LOBBY) {
                 // If we're not in the lobby, we need to give this guy some cards.
-                managePlayersPhrases(game, joiningPlayer);
+                List<Phrase> shuffledPhrases = new ArrayList<>(game.getPhraseSet());
+                Collections.shuffle(shuffledPhrases);
+                managePlayersPhrases(joiningPlayer, game, shuffledPhrases);
             }
 
             joiningPlayer.setCurrentGame(game);
@@ -235,6 +233,8 @@ public class DefaultGameActionsService implements GameActionsService {
             gameWebsocketService.sendPlayerUpdate(joiningPlayer);
             gameWebsocketService.sendGameUpdate(game);
             gameWebsocketService.sendLobbiesUpdate();
+
+            gameWebsocketService.sendGameChatMessage(game, joiningPlayer.getPlayerName() + " has joined the game.");
 
         } finally {
             joiningPlayer.getMutex().release();
@@ -247,7 +247,6 @@ public class DefaultGameActionsService implements GameActionsService {
     @Override
     public Game leaveGame(Game game, Player leavingPlayer) throws InterruptedException {
         boolean isLastPlayerInGame;
-        String gameName = game.getName();
 
         try {
             game.getMutex().acquire(); // Lock game for state modifications.
@@ -298,6 +297,8 @@ public class DefaultGameActionsService implements GameActionsService {
             gameWebsocketService.sendGameUpdate(game);
             gameWebsocketService.sendPlayerUpdate(leavingPlayer);
             gameWebsocketService.sendLobbiesUpdate();
+
+            gameWebsocketService.sendGameChatMessage(game, leavingPlayer.getPlayerName() + " has left the game.");
 
         } finally {
             leavingPlayer.getMutex().release();
@@ -356,8 +357,10 @@ public class DefaultGameActionsService implements GameActionsService {
 
     // Method assumes game has been mutex'd.
     public void manageAllPlayersPhrases(Game game) {
+        List<Phrase> shuffledPhrases = new ArrayList<>(game.getPhraseSet());
+        Collections.shuffle(shuffledPhrases);
         game.getPlayers().forEach(player -> {
-            managePlayersPhrases(game, player);
+            managePlayersPhrases(player, game, shuffledPhrases);
             gameWebsocketService.sendPlayerUpdate(player);
         });
     }
@@ -367,25 +370,19 @@ public class DefaultGameActionsService implements GameActionsService {
      *
      * This method assumes the game and player have already been mutexed. BE CAREFUL!
      *
-     * @param game Game to pick phrases out of and give to the player.
      * @param player Player to manage the cards of.
+     * @param game Game to remove the phrases from (so no one else can get the same phrases).
+     * @param shuffledPhraseList A list of phrases to pick from that has already been shuffled.
      */
-    private void managePlayersPhrases(Game game, Player player) {
-        logger.info("Managing player {}'s phrases", player);
-
-        if (player.getPhrases().size() >= 10) {
-            return;
-        }
-
-        if (game.getPhraseSet().isEmpty()) {
+    private void managePlayersPhrases(Player player, Game game, List<Phrase> shuffledPhraseList) {
+        if (player.getPhrases().size() >= 10 || shuffledPhraseList.isEmpty()) {
             return;
         }
 
         int numPhrasesToGet = 10 - player.getPhrases().size();
-        numPhrasesToGet = Math.min(numPhrasesToGet, game.getPhraseSet().size());
-        List<Phrase> list = new ArrayList<>(game.getPhraseSet());
-        Collections.shuffle(list);
-        Set<Phrase> randomSet = new HashSet<>(list.subList(0, numPhrasesToGet));
+        numPhrasesToGet = Math.min(numPhrasesToGet, shuffledPhraseList.size());
+        Set<Phrase> randomSet = new HashSet<>(shuffledPhraseList.subList(0, numPhrasesToGet));
+        shuffledPhraseList.removeAll(randomSet);
         game.getPhraseSet().removeAll(randomSet);
         player.getPhrases().addAll(randomSet);
     }

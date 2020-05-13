@@ -5,7 +5,7 @@ game:
 server:
   servlet:
     session:
-      timeout: -1
+      timeout: 1209600 # 1209600 seconds = 14 days
   port: 80
 
 ###
@@ -13,13 +13,12 @@ server:
 ###
 spring:
   datasource:
-    url: jdbc:h2:mem:example-app;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
-    platform: h2
-    username: sa
+    url:
+    platform: mysql
+    username:
     password:
-    driverClassName: org.h2.Driver
   jpa:
-    database-platform: org.hibernate.dialect.H2Dialect
+    database-platform: org.hibernate.dialect.MySQL5Dialect
     hibernate:
       ddl-auto: update
     properties:
