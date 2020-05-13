@@ -11,10 +11,10 @@ import java.util.Optional;
 @Service
 public class DefaultDeckService implements DeckService {
 
-    private DeckRepository deckRepository;
+    private final DeckRepository deckRepository;
 
     @Autowired
-    public DefaultDeckService(DeckRepository deckRepository) {
+    public DefaultDeckService(final DeckRepository deckRepository) {
         this.deckRepository = deckRepository;
     }
 

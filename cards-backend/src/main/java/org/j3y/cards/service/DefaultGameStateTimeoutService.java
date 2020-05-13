@@ -2,6 +2,7 @@ package org.j3y.cards.service;
 
 import org.j3y.cards.model.Game;
 import org.j3y.cards.model.GameState;
+import org.j3y.cards.model.Player;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -81,7 +82,9 @@ public class DefaultGameStateTimeoutService implements GameStateTimeoutService {
 
         if (game.getGameState() == GameState.DONE_JUDGING && timeoutTime.isEqual(game.getGameTimeoutTime())) {
             logger.info("Game State Timed Out - state 'DONE_JUDGING' took over {} seconds.", winnerTimeout);
-            if (game.hasGameWinner()) {
+            Player gameWinner = game.getGameWinner();
+            if (gameWinner != null) {
+                gameWebsocketService.sendGameChatMessage(game, gameWinner.getPlayerName() + " has won the game!");
                 gameStateService.setStateGameOver(game);
             } else {
                 gameStateService.setStateChoosing(game);

@@ -160,6 +160,7 @@ public class DefaultGameStateService implements GameStateService {
             game.setLastWinningPlayer(null);
             game.setJudgeChoiceWinner(null);
             game.setCurrentCard(null);
+
         } finally {
             game.getMutex().release();
         }

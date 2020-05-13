@@ -87,9 +87,14 @@
     </v-card-text>
     <v-divider></v-divider>
     <v-card-actions v-if="userIsOwner">
+      <v-slide-y-transition>
+        <v-alert class="mb-0 mr-2" width="100%" dense text v-if="hasChanges" color="blue">You have unsaved changes.</v-alert>
+      </v-slide-y-transition>
       <v-spacer></v-spacer>
-      <v-btn text color="red" @click="clear" v-if="!gameConfig">Clear</v-btn>
-      <v-btn color="primary" :disabled="!valid" @click="gameConfig ? update() : create()">{{ !!this.gameConfig ?  'Update' : 'Create'}}</v-btn>
+      <div class="ma-1">
+        <v-btn text color="red" @click="clear" v-if="!gameConfig">Clear</v-btn>
+        <v-btn color="primary" :disabled="!valid" @click="gameConfig ? update() : create()">{{ !!this.gameConfig ?  'Update' : 'Create'}}</v-btn>
+      </div>
     </v-card-actions>
   </v-card>
 </template>
@@ -128,12 +133,30 @@
       }
     },
 
+    computed: {
+      hasChanges() {
+        if (this.userIsOwner && this.gameConfig && this.gameConfig.deckIds) {
+          const curDeckIds = this.gameConfig.deckIds;
+          return (
+            this.maxPlayers !== this.gameConfig.maxPlayers ||
+            this.maxScore !== this.gameConfig.maxScore ||
+            this.turnTimeLimit !== this.gameConfig.turnTimeout ||
+            this.selectedDecks.length !== curDeckIds.length ||
+            !this.selectedDecks.every(deckId => curDeckIds.includes(deckId))
+          );
+        }
+        return false;
+      }
+    },
+
     watch: {
       gameConfig() {
-        this.maxPlayers = this.gameConfig ? this.gameConfig.maxPlayers : 6;
-        this.maxScore = this.gameConfig ? this.gameConfig.maxScore : 5;
-        this.turnTimeLimit = this.gameConfig ? this.gameConfig.turnTimeout : 60;
-        this.selectedDecks = this.gameConfig ? this.gameConfig.deckIds : [];
+        if (!this.hasChanges) {
+          this.maxPlayers = this.gameConfig ? this.gameConfig.maxPlayers : 6;
+          this.maxScore = this.gameConfig ? this.gameConfig.maxScore : 5;
+          this.turnTimeLimit = this.gameConfig ? this.gameConfig.turnTimeout : 60;
+          this.selectedDecks = this.gameConfig ? this.gameConfig.deckIds : [];
+        }
       }
     },
 
