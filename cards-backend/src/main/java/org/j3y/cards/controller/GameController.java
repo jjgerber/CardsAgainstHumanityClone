@@ -2,12 +2,10 @@ package org.j3y.cards.controller;
 
 import com.fasterxml.jackson.annotation.JsonView;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.j3y.cards.exception.GameNotFoundException;
 import org.j3y.cards.exception.InvalidActionException;
 import org.j3y.cards.model.Game;
 import org.j3y.cards.model.GameConfig;
-import org.j3y.cards.model.GameState;
 import org.j3y.cards.model.Views;
 import org.j3y.cards.service.GameActionsService;
 import org.j3y.cards.service.GameManagementService;
@@ -28,17 +26,14 @@ public class GameController extends BaseController {
 
     private final GameManagementService gameManagementService;
     private final GameActionsService gameActionsService;
-    private final ObjectMapper mapper;
 
     @Autowired
     public GameController(
             final GameManagementService gameManagementService,
-            final GameActionsService gameActionsService,
-            final ObjectMapper mapper
+            final GameActionsService gameActionsService
     ) {
         this.gameManagementService = gameManagementService;
         this.gameActionsService = gameActionsService;
-        this.mapper = mapper;
     }
 
     @JsonView(Views.Full.class)
@@ -48,7 +43,7 @@ public class GameController extends BaseController {
         if (game == null) {
             throw new GameNotFoundException();
         }
-        return getGameJson(game);
+        return gameManagementService.getGameJson(game);
     }
 
     @JsonView(Views.Limited.class)
@@ -89,12 +84,12 @@ public class GameController extends BaseController {
 
     @JsonView(Views.Full.class)
     @PostMapping(value = "/{name}/join", produces = MediaType.APPLICATION_JSON_VALUE)
-    public String joinGame(@PathVariable String name) throws InterruptedException, JsonProcessingException {
+    public String joinGame(@PathVariable String name) throws InterruptedException {
         Game game = gameManagementService.getGameByName(name);
         if (game == null) {
             throw new GameNotFoundException();
         }
-        return getGameJson(gameActionsService.joinGame(game, getPlayer()));
+        return gameManagementService.getGameJson(gameActionsService.joinGame(game, getPlayer()));
     }
 
     @JsonView(Views.Full.class)
@@ -131,23 +126,5 @@ public class GameController extends BaseController {
         }
 
         return gameActionsService.vote(game, getPlayer(), winnerIndex);
-    }
-
-    /**
-     * This method is used when there may be a need to retrieve more sensitive data in the request,
-     * e.g. joining a game that is currently in Judging state - we want to send them all the phrases
-     * and to do that will need to use the Judging view.
-     *
-     * @param game Game to convert to JSON
-     * @return Game converted to JSON with the appropriate view for it's current state.
-     * @throws JsonProcessingException
-     */
-    private String getGameJson(Game game) throws JsonProcessingException {
-        Class view = Views.Full.class;
-        GameState currentState = game.getGameState();
-        if (currentState == GameState.JUDGING || currentState == GameState.DONE_JUDGING) {
-            view = Views.Judging.class;
-        }
-        return mapper.writerWithView(view).writeValueAsString(game);
     }
 }

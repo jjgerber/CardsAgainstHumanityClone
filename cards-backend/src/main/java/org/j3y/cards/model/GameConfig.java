@@ -4,16 +4,13 @@ import com.fasterxml.jackson.annotation.JsonView;
 
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
-import javax.validation.constraints.Size;
 import java.util.List;
 
 public class GameConfig {
     @JsonView(Views.Limited.class)
-    @Size(min = 1)
     private List<String> deckIds;
 
     @JsonView(Views.Limited.class)
-    @Size(min = 1)
     private List<String> deckNames;
 
     @JsonView(Views.Limited.class)

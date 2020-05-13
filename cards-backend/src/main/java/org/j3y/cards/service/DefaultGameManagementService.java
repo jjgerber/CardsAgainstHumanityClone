@@ -1,7 +1,11 @@
 package org.j3y.cards.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.j3y.cards.exception.GameNotFoundException;
 import org.j3y.cards.model.Game;
+import org.j3y.cards.model.GameState;
+import org.j3y.cards.model.Views;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -21,9 +25,11 @@ public class DefaultGameManagementService implements GameManagementService {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     private final Map<String, Game> gameMap;
+    private final ObjectMapper mapper;
 
-    public DefaultGameManagementService() {
+    public DefaultGameManagementService(final ObjectMapper mapper) {
         this.gameMap = new HashMap<>();
+        this.mapper = mapper;
     }
 
     @Override
@@ -62,6 +68,29 @@ public class DefaultGameManagementService implements GameManagementService {
             logger.info("Purging these games from memory for lack of activity: {}", games);
             games.stream().map(Game::getPlayers).forEach(players -> players.forEach(player -> player.setCurrentGame(null)));
             games.stream().map(Game::getName).forEach(gameMap::remove);
+        }
+    }
+
+    /**
+     * This method is used when there may be a need to retrieve more sensitive data in the request,
+     * e.g. joining a game that is currently in Judging state - we want to send them all the phrases
+     * and to do that will need to use the Judging view.
+     *
+     * @param game Game to convert to JSON
+     * @return Game converted to JSON with the appropriate view for it's current state.
+     * @throws JsonProcessingException
+     */
+    public String getGameJson(Game game) {
+        Class view = Views.Full.class;
+        GameState currentState = game.getGameState();
+        if (currentState == GameState.JUDGING || currentState == GameState.DONE_JUDGING) {
+            view = Views.Judging.class;
+        }
+        try {
+            return mapper.writerWithView(view).writeValueAsString(game);
+        } catch (JsonProcessingException e) {
+            logger.error("Couldn't write game to JSON", e);
+            return "{}";
         }
     }
 }

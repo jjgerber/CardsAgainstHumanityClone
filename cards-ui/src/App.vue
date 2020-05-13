@@ -58,7 +58,7 @@
     <set-name-dialog v-model="showSetNameDialog" />
 
     <v-footer app>
-      <span>&copy; 2020 j3y.org</span>
+      <v-btn class="mr-2" x-small icon href="https://github.com/jjgerber/CardsAgainstHumanityClone" target="_blank"><v-icon>mdi-github</v-icon></v-btn> <span> &#169; 2020 cardsvshumanity.com.</span>
     </v-footer>
   </v-app>
 </template>

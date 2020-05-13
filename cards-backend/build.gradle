@@ -22,7 +22,9 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-websocket'
 
-    runtime 'com.h2database:h2:1.4.197'
+    //runtime 'com.h2database:h2:1.4.197'
+    runtime 'mysql:mysql-connector-java'
+
     runtime 'javax.xml.bind:jaxb-api:2.3.+'
     runtime 'org.xmlbeam:xmlprojector:1.4.16'
     runtime 'io.springfox:springfox-swagger-ui:+'

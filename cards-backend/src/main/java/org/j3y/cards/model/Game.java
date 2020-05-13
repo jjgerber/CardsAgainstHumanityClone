@@ -204,4 +204,15 @@ public class Game {
                 .max()
                 .orElse(0);
     }
+
+    @JsonView(Views.Full.class)
+    public Player getGameWinner() {
+        if (hasGameWinner()) {
+            return players.stream()
+                    .filter(player -> player.getScore() == gameConfig.getMaxScore())
+                    .findFirst().orElse(null);
+        }
+
+        return null;
+    }
 }

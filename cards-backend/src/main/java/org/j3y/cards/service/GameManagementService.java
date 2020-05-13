@@ -10,5 +10,7 @@ public interface GameManagementService {
     Game addGame(Game game);
     Game removeGame(String gameName);
 
+    String getGameJson(Game game);
+
     void purgeInactiveGames();
 }

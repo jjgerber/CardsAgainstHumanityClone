@@ -7,17 +7,17 @@
           <v-col class="font-italic blue--text" cols="auto">
             {{ msg.messageTime | moment("h:mm:ss a")}}
           </v-col>
-          <v-col class="font-weight-bold" cols="auto">
+          <v-col class="font-weight-bold" cols="auto" v-if="msg.playerId !== 'SERVER'">
             {{ msg.playerName }}:
           </v-col>
-          <v-col>
+          <v-col :class="{'font-italic': msg.playerId === 'SERVER'}">
             {{ msg.message }}
           </v-col>
         </v-row>
       </v-card-text>
     </div>
     <div>
-      <v-card-text class="mt-0 pt-0">
+      <v-card-text class="mt-0 pt-0 text-left">
         <v-text-field @keypress.enter="sendMessage()" v-model="chatMessage"></v-text-field><v-btn color="primary" :disabled="!!!chatMessage" @click="sendMessage()">Send</v-btn>
       </v-card-text>
     </div>

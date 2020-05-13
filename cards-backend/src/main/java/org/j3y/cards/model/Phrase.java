@@ -11,6 +11,7 @@ import java.util.UUID;
 public class Phrase {
     @Id
     @JsonView(Views.Limited.class)
+    @Column(length = 36)
     private String uuid;
 
     @JsonView(Views.Limited.class)
@@ -60,5 +61,13 @@ public class Phrase {
     @Override
     public int hashCode() {
         return Objects.hash(uuid);
+    }
+
+    @Override
+    public String toString() {
+        return "Phrase{" +
+                "uuid='" + uuid + '\'' +
+                ", text='" + text + '\'' +
+                '}';
     }
 }

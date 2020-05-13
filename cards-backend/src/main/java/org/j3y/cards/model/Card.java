@@ -2,16 +2,14 @@ package org.j3y.cards.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonView;
-import org.hibernate.annotations.GenericGenerator;
 
 import javax.persistence.*;
 
 @Entity
 public class Card {
     @Id
-    @GeneratedValue(generator = "system-uuid")
-    @GenericGenerator(name = "system-uuid", strategy="uuid")
     @JsonView(Views.Limited.class)
+    @Column(length = 36)
     private String uuid;
 
     @JsonView(Views.Limited.class)
@@ -55,5 +53,14 @@ public class Card {
 
     public void setOwningDeck(CardDeck owningDeck) {
         this.owningDeck = owningDeck;
+    }
+
+    @Override
+    public String toString() {
+        return "Card{" +
+                "uuid='" + uuid + '\'' +
+                ", text='" + text + '\'' +
+                ", numPhrases=" + numPhrases +
+                '}';
     }
 }

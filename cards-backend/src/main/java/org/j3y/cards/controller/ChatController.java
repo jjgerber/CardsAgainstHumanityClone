@@ -1,6 +1,5 @@
 package org.j3y.cards.controller;
 
-import org.apache.commons.text.StringEscapeUtils;
 import org.j3y.cards.model.ChatMessage;
 import org.j3y.cards.model.Player;
 import org.slf4j.Logger;
@@ -18,7 +17,7 @@ public class ChatController {
     @MessageMapping("/chat/{gameName}")
     public ChatMessage receiveMessage(@DestinationVariable String gameName, String message, SimpMessageHeaderAccessor headerAccessor) {
         Player player = (Player) headerAccessor.getSessionAttributes().get("player");
-        ChatMessage chatMessage = new ChatMessage(player.getName(), player.getPlayerName(), StringEscapeUtils.escapeHtml4(message));
+        ChatMessage chatMessage = new ChatMessage(player.getName(), player.getPlayerName(), message);
         logger.info("#{} - {}: {}", gameName, chatMessage.getPlayerName(), chatMessage.getMessage());
         return chatMessage;
     }

@@ -66,7 +66,7 @@
               <v-card>
                 <v-card-text v-if="!!currentCard">
                   <v-card color="black" class="game-card pa-2 text-center align-center d-inline-flex" raised>
-                    <v-card-text class="pa-0" style="height: 100%">{{ currentCard.text }}</v-card-text>
+                    <v-card-text class="pa-0 font-weight-bold" style="height: 100%" v-html="currentCard.text"></v-card-text>
                   </v-card>
                 </v-card-text>
               </v-card>
@@ -74,20 +74,23 @@
             <v-col>
               <v-card>
                 <v-card-text class="text-center">
-                  <v-alert v-if="judgeDidntChoose && game.phraseSelections.length === 0" mode="out-in" type="error">No players chose a phrase to be judged.</v-alert>
-                  <v-alert v-else-if="judgeDidntChoose && game.phraseSelections.length > 0" mode="out-in" type="error">The judge didn't choose a winner in time. Your cards have been returned.</v-alert>
-                  <v-alert v-else-if="playerIsJudge && isStateJudging && judgeSelection != null" mode="out-in" color="grey" text dense>
-                    Confirm your selection? <v-btn color="green" @click="confirmJudgement()">Confirm</v-btn>
-                  </v-alert>
-                  <v-alert v-else-if="playerIsJudge && isStateJudging" mode="out-in" color="grey" text>Choose the winner.</v-alert>
-                  <v-alert v-else-if="isStateDoneJudging && judgeChoice !== null" mode="out-in" class="text-center" color="green">
-                    Player {{ game.lastWinningPlayer.playerName }} won!
-                    They have {{ game.lastWinningPlayer.score }} point{{ game.lastWinningPlayer.score > 1 ? 's' : ''}}.
-                  </v-alert>
+                  <v-slide-y-transition mode="out-in">
+                    <v-alert class="mb-0" key="no-phrases" v-if="judgeDidntChoose && game.phraseSelections.length === 0" type="error">No players chose a phrase to be judged.</v-alert>
+                    <v-alert class="mb-0" key="no-judgement" v-else-if="judgeDidntChoose && game.phraseSelections.length > 0" type="error">The judge didn't choose a winner in time. Your cards have been returned.</v-alert>
+                    <v-alert class="mb-0" key="judge-confirm" v-else-if="playerIsJudge && isStateJudging && judgeSelection != null" color="grey" text dense>
+                      Confirm your selection? <v-btn color="green" @click="confirmJudgement()">Confirm</v-btn>
+                    </v-alert>
+                    <v-alert class="mb-0" key="judge-choose" v-else-if="playerIsJudge && isStateJudging" color="grey" text>Choose the winner.</v-alert>
+                    <v-alert class="mb-0 text-center" key="winner" v-else-if="isStateDoneJudging && judgeChoice !== null" color="green">
+                      Player {{ game.lastWinningPlayer.playerName }} won!
+                      They have {{ game.lastWinningPlayer.score }} point{{ game.lastWinningPlayer.score > 1 ? 's' : ''}}.
+                    </v-alert>
+                  </v-slide-y-transition>
                   <v-container fluid class="pa-0">
                     <v-row v-if="isStateChoosing">
                       <!-- In Choosing Mode -->
-                      <v-col class="text-center" v-for="chosen in game.numPlayersSelectedPhrases" :key="`choices-${chosen}`">
+                      <v-col v-if="game.numPlayersSelectedPhrases === 0">No players have chosen their cards yet.</v-col>
+                      <v-col v-else class="text-center" v-for="chosen in game.numPlayersSelectedPhrases" :key="`choices-${chosen}`">
                         <div class="card-group text-center d-inline">
                           <v-card
                             v-for="card in currentCard.numPhrases" :key="`phrase-${chosen}-${card}`"
@@ -112,7 +115,7 @@
                             raised
                             @click="judgeClicked(idx)"
                           >
-                            <v-card-text class="pa-0" style="height: 100%">{{ phrase.text }}</v-card-text>
+                            <v-card-text class="pa-0" style="height: 100%" v-html="phrase.text"></v-card-text>
                           </v-card>
                         </div>
                       </v-col>
@@ -146,7 +149,7 @@
                     @click="phraseClicked(phrase)"
                     raised
                   >
-                    <v-card-text class="pa-0" style="height: 100%">{{ phrase.text }}</v-card-text>
+                    <v-card-text class="pa-0" style="height: 100%" v-html="phrase.text"></v-card-text>
                   </v-card>
                 </v-card-text>
               </v-card>
@@ -310,7 +313,7 @@
         if (!this.isStateGameOver) {
           return null;
         }
-        return this.game.players.find(player => player.score === this.game.gameConfig.maxScore);
+        return this.game.gameWinner;
       }
     },
 
