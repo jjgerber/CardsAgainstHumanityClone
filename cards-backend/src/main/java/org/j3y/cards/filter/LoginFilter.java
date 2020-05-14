@@ -6,6 +6,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.GenericFilterBean;
+import org.springframework.web.util.UriUtils;
 import org.springframework.web.util.WebUtils;
 
 import javax.servlet.FilterChain;
@@ -16,6 +17,7 @@ import javax.servlet.annotation.WebFilter;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.Random;
 
 @WebFilter({"/*"})
@@ -32,8 +34,7 @@ public class LoginFilter extends GenericFilterBean {
             // See if the user has a cookie set with username.
             Cookie nameCookie = WebUtils.getCookie((HttpServletRequest) request, "playerName");
             if (nameCookie != null) {
-                logger.info("Setting name from cookie!");
-                player.setPlayerName(nameCookie.getValue());
+                player.setPlayerName(UriUtils.decode(nameCookie.getValue(), StandardCharsets.UTF_8));
             } else {
                 player.setPlayerName("Player " + new Random().nextInt(99999));
             }
