@@ -37,7 +37,7 @@
                counter
                :autofocus="true"
                v-model="userName"
-               @keypress.enter="setNewName" />
+               @keypress.enter.prevent="setNewName" />
           </v-card-text>
 
           <v-divider></v-divider>
