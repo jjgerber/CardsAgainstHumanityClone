@@ -99,7 +99,7 @@ public class GameController extends BaseController {
         if (game == null) {
             throw new GameNotFoundException();
         }
-        return gameActionsService.leaveGame(game, getPlayer());
+        return gameActionsService.leaveGame(game, getPlayer(), true);
     }
 
     @JsonView(Views.Full.class)

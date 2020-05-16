@@ -27,6 +27,9 @@ public class Player implements Authentication {
     @JsonView(Views.Limited.class)
     private int score;
 
+    @JsonView(Views.Limited.class)
+    private int missedTurns;
+
     @JsonIgnore private Semaphore mutex;
 
     public Player() {
@@ -92,6 +95,18 @@ public class Player implements Authentication {
 
     public void incrementScore() {
         this.score++;
+    }
+
+    public int getMissedTurns() {
+        return missedTurns;
+    }
+
+    public void setMissedTurns(int missedTurns) {
+        this.missedTurns = missedTurns;
+    }
+
+    public void incrementMissedTurns() {
+        this.missedTurns++;
     }
 
     public Semaphore getMutex() {

@@ -14,24 +14,6 @@
             <v-list-item-title>Lobbies</v-list-item-title>
           </v-list-item-content>
         </v-list-item>
-
-        <v-list-item link @click="$router.push('/settings')">
-          <v-list-item-action>
-            <v-icon>mdi-cog-outline</v-icon>
-          </v-list-item-action>
-            <v-list-item-content>
-              <v-list-item-title>Settings</v-list-item-title>
-          </v-list-item-content>
-        </v-list-item>
-
-        <v-list-item link @click="$router.push('/about')">
-          <v-list-item-action>
-            <v-icon>mdi-help-box</v-icon>
-          </v-list-item-action>
-          <v-list-item-content>
-            <v-list-item-title>About</v-list-item-title>
-          </v-list-item-content>
-        </v-list-item>
       </v-list>
     </v-navigation-drawer>
 
@@ -41,6 +23,16 @@
     >
       <v-app-bar-nav-icon @click.stop="drawer = !drawer"></v-app-bar-nav-icon>
       <v-toolbar-title>Cards vs. Humanity</v-toolbar-title>
+
+      <v-progress-linear
+        :active="!!timerPercent"
+        v-model="timerPercent"
+        absolute
+        bottom
+        :color="timer > 10 ? 'green' : 'red'"
+      >
+      </v-progress-linear>
+
       <v-spacer></v-spacer>
       <v-btn icon @click="showSetNameDialog = true">
         <v-icon>mdi-account</v-icon>
@@ -128,9 +120,18 @@ export default {
   },
 
   computed: {
-    state () {
-      return store.state
-    }
+    timer() {
+      return store.state.timer;
+    },
+
+    timerStart () {
+      return store.state.timerStart;
+    },
+
+    timerPercent() {
+      return this.timerStart > 0 ? (this.timer / this.timerStart) * 100 : null;
+    },
+
   }
 }
 </script>

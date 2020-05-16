@@ -36,11 +36,24 @@ public class DefaultGameStateService implements GameStateService {
 
     @Override
     public void setStateChoosing(Game game) throws InterruptedException {
+        // Kick all inactives
+        kickInactives(game);
+        if (game.getGameState() == GameState.ABANDONED) {
+            // After kicking the game is now abandoned. Return without doing anything.
+            return;
+        }
+        if (game.getPlayers().size() <= 2) {
+            gameWebsocketService.sendGameChatMessage(game, "There are not enough players to play. Game set to Lobby.");
+            setStateLobby(game);
+            return;
+        }
+
         try {
             game.getMutex().acquire();
             game.setGameState(GameState.CHOOSING);
 
             // Clear out the phrase selections
+            game.getPlayersWhoHaveChosen().clear();
             game.getPhraseSelections().clear();
             game.setJudgeChoiceWinner(null);
 
@@ -67,11 +80,31 @@ public class DefaultGameStateService implements GameStateService {
         gameStateTimeoutService.setChoosingTimeout(game);
     }
 
+    private void kickInactives(Game game) {
+        game.getPlayers().stream()
+                .filter(player -> player.getMissedTurns() >= 3)
+                .forEach(player -> {
+                    try {
+                        gameWebsocketService.sendGameChatMessage(game, player.getPlayerName() + " has missed 3 turns and is being removed.");
+                        gameActionsService.leaveGame(game, player, false);
+                    } catch (InterruptedException e) {
+                        Thread.interrupted();
+                    }
+                });
+
+        gameWebsocketService.sendGameUpdate(game);
+    }
+
     @Override
     public void setStateDoneChoosing(Game game) throws InterruptedException {
         try {
             game.getMutex().acquire();
             game.setGameState(GameState.DONE_CHOOSING);
+
+            // For everyone who missed a turn, increment their missed turn counter
+            game.getPlayers().stream()
+                    .filter(player -> !game.getPlayersWhoHaveChosen().contains(player) && !player.equals(game.getJudgingPlayer()))
+                    .forEach(Player::incrementMissedTurns);
         } finally {
             game.getMutex().release();
         }
@@ -112,16 +145,23 @@ public class DefaultGameStateService implements GameStateService {
             game.getMutex().acquire();
 
             game.setGameState(GameState.DONE_JUDGING);
+
             boolean returnPhrases = false;
 
             Player winner = game.getRoundWinner();
             if (winner == null) {
                 returnPhrases = true;
+
+                if (!game.getPlayersWhoHaveChosen().isEmpty() && game.getJudgingPlayer() != null) {
+                    game.getJudgingPlayer().incrementMissedTurns(); // Judge missed a turn, increment their counter.
+                }
             } else {
                 winner.incrementScore();
                 game.setLastWinningPlayer(winner);
                 gameWebsocketService.sendGameChatMessage(game, winner.getPlayerName() + " has won the round.");
             }
+
+            game.getPlayersWhoHaveChosen().clear();
 
             for (Player player : game.getPlayers()) {
                 try {
@@ -142,6 +182,7 @@ public class DefaultGameStateService implements GameStateService {
                     player.getMutex().release();
                 }
             }
+
         } finally {
             game.getMutex().release();
         }

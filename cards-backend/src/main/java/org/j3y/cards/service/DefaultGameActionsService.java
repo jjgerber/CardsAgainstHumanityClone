@@ -59,6 +59,11 @@ public class DefaultGameActionsService implements GameActionsService {
             game.setPlayers(players);
             game.setGameConfig(gameConfig);
 
+            // sanity checks
+            owner.getSelectedPhrases().clear();
+            owner.setScore(0);
+            owner.setMissedTurns(0);
+
             List<String> deckNames = deckService.getDecksById(gameConfig.getDeckIds())
                     .stream()
                     .map(CardDeck::getDeckName)
@@ -86,6 +91,10 @@ public class DefaultGameActionsService implements GameActionsService {
 
             if (game.getOwner() != requestingPlayer) {
                 throw new InvalidActionException("You cannot start the game unless you are the game owner.");
+            }
+
+            if (game.getPlayers().size() <= 2) {
+                throw new InvalidActionException("There must be at least 3 players to start.");
             }
 
             Set<Phrase> phrases = new HashSet<>();
@@ -152,7 +161,9 @@ public class DefaultGameActionsService implements GameActionsService {
             }
 
             game.getPhraseSelections().add(phraseSelections);
+            game.getPlayersWhoHaveChosen().add(selectingPlayer);
             selectingPlayer.getPhrases().removeAll(phraseSelections);
+            selectingPlayer.setMissedTurns(0);
 
             gameWebsocketService.sendGameUpdate(game);
             gameWebsocketService.sendPlayerUpdate(selectingPlayer);
@@ -188,6 +199,7 @@ public class DefaultGameActionsService implements GameActionsService {
             }
 
             game.setJudgeChoiceWinner(voteIndex);
+            votingPlayer.setMissedTurns(0);
 
             logger.info("Last Winning Player: {}", game.getLastWinningPlayer());
             logger.info("Winning Phrase: {}", game.getPhraseSelections().get(voteIndex));
@@ -226,9 +238,12 @@ public class DefaultGameActionsService implements GameActionsService {
             }
 
             joiningPlayer.setCurrentGame(game);
-            joiningPlayer.getSelectedPhrases().clear(); // sanity check - clear these out
-            joiningPlayer.setScore(0); // sanity check
             game.getPlayers().add(joiningPlayer);
+
+            // sanity checks
+            joiningPlayer.getSelectedPhrases().clear();
+            joiningPlayer.setScore(0);
+            joiningPlayer.setMissedTurns(0);
 
             gameWebsocketService.sendPlayerUpdate(joiningPlayer);
             gameWebsocketService.sendGameUpdate(game);
@@ -245,7 +260,7 @@ public class DefaultGameActionsService implements GameActionsService {
     }
 
     @Override
-    public Game leaveGame(Game game, Player leavingPlayer) throws InterruptedException {
+    public Game leaveGame(Game game, Player leavingPlayer, boolean sendGameUpdate) throws InterruptedException {
         boolean isLastPlayerInGame;
 
         try {
@@ -294,11 +309,13 @@ public class DefaultGameActionsService implements GameActionsService {
 
             leavingPlayer.setScore(0); // sanity check
 
-            gameWebsocketService.sendGameUpdate(game);
-            gameWebsocketService.sendPlayerUpdate(leavingPlayer);
-            gameWebsocketService.sendLobbiesUpdate();
+            if (sendGameUpdate) {
+                gameWebsocketService.sendGameUpdate(game);
+                gameWebsocketService.sendGameChatMessage(game, leavingPlayer.getPlayerName() + " has left the game.");
+            }
 
-            gameWebsocketService.sendGameChatMessage(game, leavingPlayer.getPlayerName() + " has left the game.");
+            gameWebsocketService.sendLobbiesUpdate();
+            gameWebsocketService.sendPlayerUpdate(leavingPlayer);
 
         } finally {
             leavingPlayer.getMutex().release();

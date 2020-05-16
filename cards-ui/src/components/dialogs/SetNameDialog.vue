@@ -32,7 +32,7 @@
               Set your desired username:
             </p>
              <v-text-field
-               :rules="[v => /^[a-zA-Z0-9 ]{1,20}$/.test(v) || 'Numbers and letters only. Required.']"
+               :rules="[v => /^[a-zA-Z0-9 \-'!?.,]{1,20}$/.test(v) || 'Numbers and letters only. Required.']"
                maxlength="20"
                counter
                :autofocus="true"

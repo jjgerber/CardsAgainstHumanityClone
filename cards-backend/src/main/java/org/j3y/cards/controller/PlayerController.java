@@ -20,7 +20,7 @@ public class PlayerController extends BaseController {
 
     private final GameWebsocketService gameWebsocketService;
 
-    private static final String USERNAME_FORMAT_REGEX = "^[a-zA-Z0-9 \\-'.,]{1,20}$";
+    private static final String USERNAME_FORMAT_REGEX = "^[a-zA-Z0-9 \\-'!?.,]{1,20}$";
 
     public PlayerController(GameWebsocketService gameWebsocketService) {
         this.gameWebsocketService = gameWebsocketService;

@@ -27,6 +27,7 @@ public class Game {
     @JsonView(Views.Limited.class) private ZonedDateTime gameStateTime;
     @JsonView(Views.Limited.class) private ZonedDateTime gameTimeoutTime;
     @JsonView(Views.Judging.class) private List<List<Phrase>> phraseSelections;
+    @JsonView(Views.Full.class) private List<Player> playersWhoHaveChosen;
 
     @JsonView(Views.Full.class) private Integer judgeChoiceWinner;
     @JsonView(Views.Full.class) private Player lastWinningPlayer;
@@ -35,6 +36,7 @@ public class Game {
         this.uuid = UUID.randomUUID().toString();
         this.mutex = new Semaphore(1);
         this.phraseSelections = new ArrayList<>();
+        this.playersWhoHaveChosen = new ArrayList<>();
         this.setGameState(GameState.LOBBY);
     }
 
@@ -138,9 +140,8 @@ public class Game {
         return phraseSelections;
     }
 
-    @JsonView(Views.Full.class)
-    public int getNumPlayersSelectedPhrases() {
-        return phraseSelections == null ? 0 : phraseSelections.size();
+    public List<Player> getPlayersWhoHaveChosen() {
+        return playersWhoHaveChosen;
     }
 
     public void setPhraseSelections(List<List<Phrase>> phraseSelections) {
