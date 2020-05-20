@@ -59,10 +59,8 @@ public class DefaultGameActionsService implements GameActionsService {
             game.setPlayers(players);
             game.setGameConfig(gameConfig);
 
-            // sanity checks
-            owner.getSelectedPhrases().clear();
-            owner.setScore(0);
-            owner.setMissedTurns(0);
+            // sanity check
+            owner.reset(true);
 
             List<String> deckNames = deckService.getDecksById(gameConfig.getDeckIds())
                     .stream()
@@ -241,9 +239,7 @@ public class DefaultGameActionsService implements GameActionsService {
             game.getPlayers().add(joiningPlayer);
 
             // sanity checks
-            joiningPlayer.getSelectedPhrases().clear();
-            joiningPlayer.setScore(0);
-            joiningPlayer.setMissedTurns(0);
+            joiningPlayer.reset(true);
 
             gameWebsocketService.sendPlayerUpdate(joiningPlayer);
             gameWebsocketService.sendGameUpdate(game);
@@ -307,7 +303,7 @@ public class DefaultGameActionsService implements GameActionsService {
                 gameManagementService.removeGame(game.getName());
             }
 
-            leavingPlayer.setScore(0); // sanity check
+            leavingPlayer.reset(true);
 
             if (sendGameUpdate) {
                 gameWebsocketService.sendGameUpdate(game);

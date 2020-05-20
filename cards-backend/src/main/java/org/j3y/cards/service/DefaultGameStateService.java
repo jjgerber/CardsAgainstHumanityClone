@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class DefaultGameStateService implements GameStateService {
@@ -80,19 +81,15 @@ public class DefaultGameStateService implements GameStateService {
         gameStateTimeoutService.setChoosingTimeout(game);
     }
 
-    private void kickInactives(Game game) {
-        game.getPlayers().stream()
+    private void kickInactives(Game game) throws InterruptedException {
+        List<Player> inactivePlayers = game.getPlayers().stream()
                 .filter(player -> player.getMissedTurns() >= 3)
-                .forEach(player -> {
-                    try {
-                        gameWebsocketService.sendGameChatMessage(game, player.getPlayerName() + " has missed 3 turns and is being removed.");
-                        gameActionsService.leaveGame(game, player, false);
-                    } catch (InterruptedException e) {
-                        Thread.interrupted();
-                    }
-                });
+                .collect(Collectors.toList());
 
-        gameWebsocketService.sendGameUpdate(game);
+        for (Player inactivePlayer : inactivePlayers) {
+            gameActionsService.leaveGame(game, inactivePlayer, false);
+            gameWebsocketService.sendGameChatMessage(game, inactivePlayer.getPlayerName() + " missed 3 consecutive turns and has been removed from the game.");
+        }
     }
 
     @Override
@@ -223,8 +220,7 @@ public class DefaultGameStateService implements GameStateService {
             game.setJudgeChoiceWinner(null);
             game.setLastWinningPlayer(null);
             game.getPlayers().forEach(player -> {
-                player.setScore(0);
-                player.getPhrases().clear();
+                player.reset();
                 gameWebsocketService.sendPlayerUpdate(player);
             });
 

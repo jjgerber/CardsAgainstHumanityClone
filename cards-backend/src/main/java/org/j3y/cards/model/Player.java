@@ -16,7 +16,8 @@ public class Player implements Authentication {
     @JsonView(Views.Limited.class)
     private final String name;
 
-    @JsonIgnore private Game currentGame;
+    @JsonIgnore
+    private Game currentGame;
 
     @JsonView(Views.LoggedInUser.class)
     private Set<Phrase> phrases;
@@ -30,7 +31,8 @@ public class Player implements Authentication {
     @JsonView(Views.Limited.class)
     private int missedTurns;
 
-    @JsonIgnore private Semaphore mutex;
+    @JsonIgnore
+    private final Semaphore mutex;
 
     public Player() {
         this.name = UUID.randomUUID().toString();
@@ -159,5 +161,15 @@ public class Player implements Authentication {
     @Override
     public int hashCode() {
         return Objects.hash(name);
+    }
+
+    public void reset(boolean resetMissedTurns) {
+        if (resetMissedTurns) setMissedTurns(0);
+        setScore(0);
+        getPhrases().clear();
+    }
+
+    public void reset() {
+        reset(false);
     }
 }

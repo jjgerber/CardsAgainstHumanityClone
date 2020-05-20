@@ -9,28 +9,45 @@ import java.util.*;
 import java.util.concurrent.Semaphore;
 
 public class Game {
-    @JsonView(Views.Limited.class) private final String uuid;
-    @JsonView(Views.Limited.class) private String name;
-    @JsonView(Views.Limited.class) private Player owner;
-    @JsonIgnore private Set<Card> cardSet;
-    @JsonIgnore private Set<Phrase> phraseSet;
+    @JsonView(Views.Limited.class)
+    private final String uuid;
+    @JsonView(Views.Limited.class)
+    private String name;
+    @JsonView(Views.Limited.class)
+    private Player owner;
+    @JsonIgnore
+    private Set<Card> cardSet;
+    @JsonIgnore
+    private Set<Phrase> phraseSet;
 
-    @JsonView(Views.Full.class) private List<Player> players;
+    @JsonView(Views.Full.class)
+    private List<Player> players;
 
-    @JsonView(Views.Limited.class) private GameConfig gameConfig;
+    @JsonView(Views.Limited.class)
+    private GameConfig gameConfig;
     
-    @JsonIgnore private Semaphore mutex;
-    @JsonView(Views.Full.class) private Player judgingPlayer;
-    @JsonView(Views.Full.class) private Card currentCard;
+    @JsonIgnore
+    private final Semaphore mutex;
+    @JsonView(Views.Full.class)
+    private Player judgingPlayer;
+    @JsonView(Views.Full.class)
+    private Card currentCard;
 
-    @JsonView(Views.Limited.class) private GameState gameState;
-    @JsonView(Views.Limited.class) private ZonedDateTime gameStateTime;
-    @JsonView(Views.Limited.class) private ZonedDateTime gameTimeoutTime;
-    @JsonView(Views.Judging.class) private List<List<Phrase>> phraseSelections;
-    @JsonView(Views.Full.class) private List<Player> playersWhoHaveChosen;
+    @JsonView(Views.Limited.class)
+    private GameState gameState;
+    @JsonView(Views.Limited.class)
+    private ZonedDateTime gameStateTime;
+    @JsonView(Views.Limited.class)
+    private ZonedDateTime gameTimeoutTime;
+    @JsonView(Views.Judging.class)
+    private final List<List<Phrase>> phraseSelections;
+    @JsonView(Views.Full.class)
+    private final List<Player> playersWhoHaveChosen;
 
-    @JsonView(Views.Full.class) private Integer judgeChoiceWinner;
-    @JsonView(Views.Full.class) private Player lastWinningPlayer;
+    @JsonView(Views.Full.class)
+    private Integer judgeChoiceWinner;
+    @JsonView(Views.Full.class)
+    private Player lastWinningPlayer;
 
     public Game() {
         this.uuid = UUID.randomUUID().toString();
@@ -144,10 +161,6 @@ public class Game {
         return playersWhoHaveChosen;
     }
 
-    public void setPhraseSelections(List<List<Phrase>> phraseSelections) {
-        this.phraseSelections = phraseSelections;
-    }
-
     public Player getLastWinningPlayer() {
         return lastWinningPlayer;
     }
@@ -185,7 +198,7 @@ public class Game {
             return null;
         }
 
-        List<Phrase> winningPhrases = this.getPhraseSelections().get(judgeChoiceWinner);
+        List<Phrase> winningPhrases = phraseSelections.get(judgeChoiceWinner);
 
         return players.stream()
                 .filter(player -> player.getSelectedPhrases().equals(winningPhrases))

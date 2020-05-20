@@ -56,11 +56,9 @@
 </template>
 
 <script>
-import SetNameDialog from './components/dialogs/SetNameDialog'
-import UserInfoMixin from './mixins/UserInfoMixin'
-import { store, mutations } from './store'
-import SockJS from "sockjs-client";
-import Stomp from "webstomp-client";
+import SetNameDialog from './components/dialogs/SetNameDialog';
+import UserInfoMixin from './mixins/UserInfoMixin';
+import { store, mutations } from './store';
 import Vue from "vue";
 
 export default {
@@ -77,25 +75,20 @@ export default {
   data: () => ({
     showSetNameDialog: false,
     drawer: null,
-    items: [
-      { title: 'Dashboard', icon: 'mdi-view-dashboard' },
-      { title: 'Photos', icon: 'mdi-image' },
-      { title: 'About', icon: 'mdi-help-box' }
-    ],
     right: null,
     playerInfoReady: false,
     socketReady: false,
     playerInfoSubscription: null
   }),
 
-  mounted () {
+  mounted() {
     this.retrievePlayerInfo().catch((error) => {
       console.error(error)
     }).finally(() => {
       this.playerInfoReady = true
     })
 
-    Vue.prototype.$stomp.connect( {}, frame => {
+    this.$stomp.connect( {}, frame => {
         this.socketReady = true;
         console.log(`Connecting to user information ${this.playerInfo.playerName}'s queue.`)
         this.playerInfoSubscription = this.$stomp.subscribe(`/user/${this.playerInfo.name}/userInfo`, tick => {

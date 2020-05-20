@@ -187,7 +187,7 @@
           </div>
         </div>
 
-        {{ state }}
+        <!-- {{ state }} -->
       </v-col>
     </v-row>
   </v-container>
@@ -217,7 +217,7 @@
       Chat
     ],
 
-    data: function () {
+    data: () => {
       return {
         selections: [],
         judgeSelection: null,
@@ -325,6 +325,10 @@
         return this.game && this.game.gameTimeoutTime ? Date.parse(this.game.gameTimeoutTime) : null;
       },
 
+      gameStateTime() {
+        return this.game && this.game.gameStateTime ? Date.parse(this.game.gameStateTime) : null;
+      },
+
       currentCard() {
         return this.game && this.game.currentCard ? this.game.currentCard : null;
       },
@@ -345,9 +349,9 @@
     watch: {
       gameTimeout() {
         if (this.gameTimeout) {
-          this.timerCount = Math.round((this.gameTimeout - new Date()) / 1000);
           clearInterval(this.timer);
-          this.timerStart = this.timerCount;
+          this.timerCount = Math.max(Math.round((this.gameTimeout - new Date()) / 1000), 0);
+          this.timerStart = Math.round((this.gameTimeout - this.gameStateTime) / 1000);
           this.timer = setInterval(() => {
             if (this.timerCount > 0) {
               this.timerCount--;
@@ -361,8 +365,8 @@
       },
 
       isStateChoosing() {
-        // If we're done choosing, clear selections.
         if (!this.isStateChoosing) {
+          // If we're done choosing (was just set to false), clear selections.
           this.selections = [];
         }
       },
@@ -457,8 +461,12 @@
       if (this.gameSubscription) {
         console.log(`Unsubscribing from game subscription.`)
         this.gameSubscription.unsubscribe();
-
       }
+
+      clearInterval(this.timer);
+      this.game = null;
+      this.timerStart = null;
+      this.timerCount = null;
     }
   }
 </script>
