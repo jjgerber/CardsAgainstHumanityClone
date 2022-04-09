@@ -12,13 +12,14 @@ import org.j3y.cards.repository.PhraseRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.ApplicationListener;
-import org.springframework.util.ResourceUtils;
+import org.springframework.stereotype.Component;
 
-import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 
-//@Component
+@Component
 public class CardsStartup implements ApplicationListener<ApplicationReadyEvent> {
 
     private CardRepository cardRepository;
@@ -37,9 +38,11 @@ public class CardsStartup implements ApplicationListener<ApplicationReadyEvent> 
     @Override
     public void onApplicationEvent(ApplicationReadyEvent event) {
         try {
-            File file = ResourceUtils.getFile("classpath:allofficial.json");
+            InputStream is = Thread.currentThread().getContextClassLoader().getResourceAsStream("allofficial.json");
+            assert is != null;
+            String text = new String(is.readAllBytes(), StandardCharsets.UTF_8);
             ObjectMapper mapper = new ObjectMapper();
-            JsonNode cardsData = mapper.readTree(file);
+            JsonNode cardsData = mapper.readTree(text);
             parseJson(cardsData);
         } catch (IOException e) {
             e.printStackTrace();

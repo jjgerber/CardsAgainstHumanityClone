@@ -8,7 +8,6 @@ import org.j3y.cards.service.GameWebsocketService;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriUtils;
-import springfox.documentation.annotations.ApiIgnore;
 
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletResponse;
@@ -34,7 +33,7 @@ public class PlayerController extends BaseController {
 
     @JsonView(Views.LoggedInUser.class)
     @PostMapping(value = "/name", produces = MediaType.APPLICATION_JSON_VALUE)
-    public Player setPlayerName(@RequestBody String name, @ApiIgnore HttpServletResponse response) {
+    public Player setPlayerName(@RequestBody String name, HttpServletResponse response) {
         if (!name.matches(USERNAME_FORMAT_REGEX)) {
             throw new InvalidActionException("Your name contained invalid characters or was too long.");
         }

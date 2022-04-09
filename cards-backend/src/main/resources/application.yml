@@ -6,39 +6,17 @@ server:
   servlet:
     session:
       timeout: 1209600 # 1209600 seconds = 14 days
-  port: 80
+  port: 5000
 
 ###
 #   Database Settings
 ###
 spring:
-  datasource:
-    url:
-    platform: mysql
-    username:
-    password:
   jpa:
-    database-platform: org.hibernate.dialect.MySQL5Dialect
     hibernate:
       ddl-auto: update
     properties:
       hibernate:
-        show_sql: true
+        show_sql: false
         use_sql_comments: true
         format_sql: true
-
-  ###
-  #   H2 Settings
-  ###
-  h2:
-    console:
-      enabled: true
-      path: /console
-      settings:
-        trace: false
-        web-allow-others: false
-
-  output:
-    ansi:
-      enabled: ALWAYS
-

@@ -1,11 +1,13 @@
-apply plugin: 'java'
-apply plugin: 'war'
-apply plugin: 'org.springframework.boot'
-apply plugin: 'io.spring.dependency-management'
+plugins {
+    id 'java'
+    id 'war'
+    id 'org.springframework.boot' version '2.6.6'
+    id 'io.spring.dependency-management' version '1.0.11.RELEASE'
+}
 
 group = 'org.j3y'
 version = '0.0.1-SNAPSHOT'
-sourceCompatibility = 1.8
+sourceCompatibility = 11
 
 repositories {
     mavenCentral()
@@ -13,21 +15,21 @@ repositories {
 
 dependencies {
     implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-csv'
-    implementation 'org.apache.commons:commons-collections4:4.+'
-    implementation 'org.apache.commons:commons-text:1.8+'
-    implementation 'io.springfox:springfox-swagger2:+'
+    implementation 'org.apache.commons:commons-collections4:4.4+'
+    implementation 'org.apache.commons:commons-text:1.9+'
+    implementation 'org.springdoc:springdoc-openapi-ui:1.6.7'
+
 
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     implementation 'org.springframework.boot:spring-boot-starter-security'
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-websocket'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
 
-    //runtime 'com.h2database:h2:1.4.197'
-    runtime 'mysql:mysql-connector-java'
-
-    runtime 'javax.xml.bind:jaxb-api:2.3.+'
-    runtime 'org.xmlbeam:xmlprojector:1.4.16'
-    runtime 'io.springfox:springfox-swagger-ui:+'
+    runtimeOnly 'com.h2database:h2:2.1.210'
+    runtimeOnly 'javax.xml.bind:jaxb-api:2.3.1+'
+    runtimeOnly 'org.xmlbeam:xmlprojector:1.4.22'
+    runtimeOnly 'io.springfox:springfox-swagger-ui:3.0.0'
 
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
 }
