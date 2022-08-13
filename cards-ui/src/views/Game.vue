@@ -114,7 +114,7 @@
                 <v-card-text
                   class="pa-0 font-weight-bold"
                   style="height: 100%"
-                  v-text="currentCard.text"
+                  v-html="currentCard.text"
                 />
               </v-card>
             </v-col>
@@ -224,7 +224,7 @@
                             <v-card-text
                               class="pa-0"
                               style="height: 100%"
-                              v-text="phrase.text"
+                              v-html="phrase.text"
                             />
                           </v-card>
                         </div>
@@ -290,7 +290,7 @@
                     <v-card-text
                       class="pa-0"
                       style="height: 100%"
-                      v-text="phrase.text"
+                      v-html="phrase.text"
                     />
                   </v-card>
                 </v-card-text>
@@ -687,7 +687,7 @@
   }
 
   .white-card-holder {
-    min-width: 450px;
+    min-width: 350px;
   }
 
   .chat {
