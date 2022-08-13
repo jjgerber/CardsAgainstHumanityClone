@@ -7,7 +7,7 @@ plugins {
 
 group = 'org.j3y'
 version = '0.1.0-SNAPSHOT'
-sourceCompatibility = 18
+sourceCompatibility = 17
 
 repositories {
     mavenCentral()
