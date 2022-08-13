@@ -1,10 +1,13 @@
 <template>
   <v-card>
     <v-card-text>
-      <v-form ref="form" v-model="valid">
+      <v-form
+        ref="form"
+        v-model="valid"
+      >
         <v-text-field
-          :disabled="!!gameConfig"
           v-model="name"
+          :disabled="!!gameConfig"
           :maxlength="20"
           counter
           :rules="[v => /^[a-zA-Z0-9 ]{1,20}$/.test(v) || 'Numbers and letters only. Required.']"
@@ -17,7 +20,8 @@
           :max="10"
           :min="3"
           :tick-size="1"
-          :ticks="true">
+          :ticks="true"
+        >
           <template v-slot:append>
             <span>{{ maxPlayers }}</span>
           </template>
@@ -29,7 +33,8 @@
           :max="15"
           :min="1"
           :tick-size="1"
-          :ticks="true">
+          :ticks="true"
+        >
           <template v-slot:append>
             <span>{{ maxScore }}</span>
           </template>
@@ -42,13 +47,20 @@
           :min="15"
           :step="5"
           :tick-size="5"
-          :ticks="true">
+          :ticks="true"
+        >
           <template v-slot:append>
             <span>{{ turnTimeLimit }}</span>
           </template>
         </v-slider>
-        <h2 class="text-left mb-2">Decks</h2>
-        <v-list color="blue" max-height="310" style="overflow-y: auto">
+        <h2 class="text-left mb-2">
+          Decks
+        </h2>
+        <v-list
+          color="blue"
+          max-height="310"
+          style="overflow-y: auto"
+        >
           <v-list-item-group
             v-model="selectedDecks"
             multiple
@@ -58,7 +70,7 @@
               <v-divider
                 v-if="!deck"
                 :key="`deck-divider-${i}`"
-              ></v-divider>
+              />
               <v-list-item
                 v-else
                 :key="`deck-${i}`"
@@ -68,7 +80,7 @@
               >
                 <template v-slot:default="{ active, toggle }">
                   <v-list-item-content>
-                    <v-list-item-title v-text="deck.deckName"></v-list-item-title>
+                    <v-list-item-title v-text="deck.deckName" />
                   </v-list-item-content>
                   <v-list-item-action>
                     <v-checkbox
@@ -76,7 +88,7 @@
                       :true-value="deck.uuid"
                       color="accent-4"
                       @click="userIsOwner ? toggle : null"
-                    ></v-checkbox>
+                    />
                   </v-list-item-action>
                 </template>
               </v-list-item>
@@ -85,15 +97,37 @@
         </v-list>
       </v-form>
     </v-card-text>
-    <v-divider></v-divider>
+    <v-divider />
     <v-card-actions v-if="userIsOwner">
       <v-slide-y-transition>
-        <v-alert class="mb-0 mr-2" width="100%" dense text v-if="hasChanges" color="blue">You have unsaved changes.</v-alert>
+        <v-alert
+          v-if="hasChanges"
+          class="mb-0 mr-2"
+          width="100%"
+          dense
+          text
+          color="blue"
+        >
+          You have unsaved changes.
+        </v-alert>
       </v-slide-y-transition>
-      <v-spacer></v-spacer>
+      <v-spacer />
       <div class="ma-1">
-        <v-btn text color="red" @click="clear" v-if="!gameConfig">Clear</v-btn>
-        <v-btn color="primary" :disabled="!valid" @click="gameConfig ? update() : create()">{{ !!this.gameConfig ?  'Update' : 'Create'}}</v-btn>
+        <v-btn
+          v-if="!gameConfig"
+          text
+          color="red"
+          @click="clear"
+        >
+          Clear
+        </v-btn>
+        <v-btn
+          color="primary"
+          :disabled="!valid"
+          @click="gameConfig ? update() : create()"
+        >
+          {{ !!gameConfig ? 'Update' : 'Create' }}
+        </v-btn>
       </div>
     </v-card-actions>
   </v-card>
@@ -104,8 +138,15 @@
   import LobbyMixin from '../mixins/GamesMixin'
 
   export default {
+
+    mixins: [
+      LobbyMixin
+    ],
     props: {
-      gameName: String,
+      gameName: {
+        type: String,
+        default: ""
+      },
       gameConfig: {
         type: Object,
         default: null
@@ -115,10 +156,6 @@
         default: true
       }
     },
-
-    mixins: [
-      LobbyMixin
-    ],
 
     data () {
       return {

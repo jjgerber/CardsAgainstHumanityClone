@@ -4,7 +4,10 @@
       v-model="dialog"
       width="500"
     >
-      <v-form ref="form" v-model="valid">
+      <v-form
+        ref="form"
+        v-model="valid"
+      >
         <template v-slot:activator="{ on }">
           <v-btn
             color="red lighten-2"
@@ -24,25 +27,31 @@
           </v-card-title>
 
           <v-slide-y-reverse-transition>
-            <v-alert v-if="error" type="error">{{ error }}</v-alert>
+            <v-alert
+              v-if="error"
+              type="error"
+            >
+              {{ error }}
+            </v-alert>
           </v-slide-y-reverse-transition>
 
           <v-card-text>
             <p>
               Set your desired username:
             </p>
-             <v-text-field
-               :rules="[v => /^[a-zA-Z0-9 \-'!?.,]{1,20}$/.test(v) || 'Numbers and letters only. Required.']"
-               maxlength="20"
-               counter
-               :autofocus="true"
-               v-model="userName"
-               @keypress.enter.prevent="setNewName" />
+            <v-text-field
+              v-model="userName"
+              :rules="[v => /^[a-zA-Z0-9 \-'!?.,]{1,20}$/.test(v) || 'Numbers and letters only. Required.']"
+              maxlength="20"
+              counter
+              :autofocus="true"
+              @keypress.enter.prevent="setNewName"
+            />
           </v-card-text>
 
-          <v-divider></v-divider>
+          <v-divider />
           <v-card-actions>
-            <v-spacer></v-spacer>
+            <v-spacer />
             <v-btn
               color="red"
               text
@@ -53,8 +62,8 @@
             <v-btn
               color="primary"
               text
-              @click="setNewName()"
               :disabled="!valid"
+              @click="setNewName()"
             >
               Accept Change
             </v-btn>

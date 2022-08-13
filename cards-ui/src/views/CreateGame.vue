@@ -15,11 +15,11 @@
 import GameSettings from "../components/GameSettings";
 
 export default {
-  props: {
-  },
 
   components: {
     GameSettings
+  },
+  props: {
   },
 
   data () {

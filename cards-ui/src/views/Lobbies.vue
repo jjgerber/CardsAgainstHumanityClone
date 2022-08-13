@@ -9,7 +9,13 @@
           <v-card-title>
             <v-row>
               <v-col md="auto">
-                <v-btn rounded color="primary" @click="$router.push('create-lobby')"><v-icon>mdi-plus</v-icon>Create Lobby</v-btn>
+                <v-btn
+                  rounded
+                  color="primary"
+                  @click="$router.push('create-lobby')"
+                >
+                  <v-icon>mdi-plus</v-icon>Create Lobby
+                </v-btn>
               </v-col>
               <v-col class="pa-0">
                 <v-text-field
@@ -20,7 +26,7 @@
                   single-line
                   hide-details
                   clearable
-                ></v-text-field>
+                />
               </v-col>
             </v-row>
           </v-card-title>
@@ -33,7 +39,7 @@
             no-data-text="No Lobbies Found"
             :sort-desc="[false]"
             @click:row="handleGameClick"
-          ></v-data-table>
+          />
         </v-card>
       </v-col>
     </v-row>
@@ -66,18 +72,6 @@
       }
     },
 
-    methods: {
-      handleGameClick (row) {
-        this.$router.push(`/game/${row.name}`);
-      },
-
-      connect() {
-        this.stompSubscription = this.$stomp.subscribe('/topic/lobbies', tick => {
-          this.games = JSON.parse(tick.body);
-        })
-      }
-    },
-
     mounted () {
       this.connect();
       this.callGetAllLobbies().then((response) => {
@@ -89,6 +83,18 @@
       if (this.stompSubscription) {
         console.log("Unsubscribing from lobby topic.");
         this.stompSubscription.unsubscribe();
+      }
+    },
+
+    methods: {
+      handleGameClick (row) {
+        this.$router.push(`/game/${row.name}`);
+      },
+
+      connect() {
+        this.stompSubscription = this.$stomp.subscribe('/topic/lobbies', tick => {
+          this.games = JSON.parse(tick.body);
+        })
       }
     }
   }

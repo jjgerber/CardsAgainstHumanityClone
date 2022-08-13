@@ -1,13 +1,27 @@
 <template>
   <v-card>
     <v-card-title>Chat</v-card-title>
-    <div id="chat" ref="chat">
+    <div
+      id="chat"
+      ref="chat"
+    >
       <v-card-text class="text-left pb-0 pt-0">
-        <v-row v-for="(msg, idx) in chatMessages" :key="`message-${idx}`" dense>
-          <v-col class="font-italic blue--text" cols="auto">
-            {{ msg.messageTime | moment("h:mm:ss a")}}
+        <v-row
+          v-for="(msg, idx) in chatMessages"
+          :key="`message-${idx}`"
+          dense
+        >
+          <v-col
+            class="font-italic blue--text"
+            cols="auto"
+          >
+            {{ msg.messageTime | moment("h:mm:ss a") }}
           </v-col>
-          <v-col class="font-weight-bold" cols="auto" v-if="msg.playerId !== 'SERVER'">
+          <v-col
+            v-if="msg.playerId !== 'SERVER'"
+            class="font-weight-bold"
+            cols="auto"
+          >
             {{ msg.playerName }}:
           </v-col>
           <v-col :class="{'font-italic': msg.playerId === 'SERVER'}">
@@ -18,7 +32,16 @@
     </div>
     <div>
       <v-card-text class="mt-0 pt-0 text-left">
-        <v-text-field @keypress.enter="sendMessage()" v-model="chatMessage"></v-text-field><v-btn color="primary" :disabled="!!!chatMessage" @click="sendMessage()">Send</v-btn>
+        <v-text-field
+          v-model="chatMessage"
+          @keypress.enter="sendMessage()"
+        /><v-btn
+          color="primary"
+          :disabled="!!!chatMessage"
+          @click="sendMessage()"
+        >
+          Send
+        </v-btn>
       </v-card-text>
     </div>
   </v-card>
@@ -46,6 +69,17 @@
     computed: {
     },
 
+    mounted() {
+      this.connect();
+    },
+
+    destroyed() {
+      if (this.chatSubscription) {
+        console.log(`Unsubscribing from game ${this.gameName}'s chat.`);
+        this.chatSubscription.unsubscribe();
+      }
+    },
+
     methods: {
       connect() {
         this.chatSubscription = this.$stomp.subscribe('/topic/chat/' + this.gameName, tick => {
@@ -63,17 +97,6 @@
           this.$stomp.send('/app/chat/' + this.gameName, this.chatMessage);
           this.chatMessage = '';
         }
-      }
-    },
-
-    mounted() {
-      this.connect();
-    },
-
-    destroyed() {
-      if (this.chatSubscription) {
-        console.log(`Unsubscribing from game ${this.gameName}'s chat.`);
-        this.chatSubscription.unsubscribe();
       }
     }
   }

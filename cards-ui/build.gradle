@@ -16,3 +16,10 @@ task buildVue(type: YarnTask, dependsOn: yarn_install) {
 
     args = ["build"]
 }
+
+task serveVue(type: YarnTask, dependsOn: yarn_install) {
+    group = "application"
+    description = "Run the front end server with hot reloads."
+
+    args = ["serve"]
+}

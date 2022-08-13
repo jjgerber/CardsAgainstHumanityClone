@@ -6,7 +6,7 @@ server:
   servlet:
     session:
       timeout: 1209600 # 1209600 seconds = 14 days
-  port: 5000
+  port: 80
 
 ###
 #   Database Settings
