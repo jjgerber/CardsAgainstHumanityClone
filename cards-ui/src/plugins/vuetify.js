@@ -1,10 +1,19 @@
-import Vue from 'vue'
-import Vuetify from 'vuetify/lib'
+/**
+ * Vuetify3 Plugin
+ */
+// Vuetify
+import * as directives from 'vuetify/directives';
+import * as components from 'vuetify/components';
+import { createVuetify } from 'vuetify';
 
-Vue.use(Vuetify)
+// Styles
+import 'vuetify/styles';
 
-export default new Vuetify({
+export default createVuetify({
   theme: {
-    dark: true
-  }
-})
+    defaultTheme: 'dark'
+  },
+  // https://next.vuetifyjs.com/en/getting-started/installation/
+  components,
+  directives,
+});

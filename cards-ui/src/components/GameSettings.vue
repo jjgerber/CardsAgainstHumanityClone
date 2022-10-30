@@ -20,7 +20,6 @@
           :max="10"
           :min="3"
           :tick-size="1"
-          :ticks="true"
         >
           <template v-slot:append>
             <span>{{ maxPlayers }}</span>
@@ -33,7 +32,6 @@
           :max="15"
           :min="1"
           :tick-size="1"
-          :ticks="true"
         >
           <template v-slot:append>
             <span>{{ maxScore }}</span>
@@ -47,7 +45,6 @@
           :min="15"
           :step="5"
           :tick-size="5"
-          :ticks="true"
         >
           <template v-slot:append>
             <span>{{ turnTimeLimit }}</span>
@@ -105,7 +102,6 @@
           class="mb-0 mr-2"
           width="100%"
           dense
-          text
           color="blue"
         >
           You have unsaved changes.

@@ -10,12 +10,10 @@
           link
           @click="$router.push('/')"
         >
-          <v-list-item-action>
+          <template v-slot:prepend>
             <v-icon>mdi-account-group</v-icon>
-          </v-list-item-action>
-          <v-list-item-content>
-            <v-list-item-title>Lobbies</v-list-item-title>
-          </v-list-item-content>
+          </template>
+          <v-list-item-title>Lobbies</v-list-item-title>
         </v-list-item>
       </v-list>
     </v-navigation-drawer>
@@ -46,9 +44,7 @@
     </v-app-bar>
 
     <v-main>
-      <v-fade-transition mode="out-in">
-        <router-view />
-      </v-fade-transition>
+      <router-view />
     </v-main>
 
     <set-name-dialog v-model="showSetNameDialog" />
@@ -68,10 +64,9 @@
 </template>
 
 <script>
-import SetNameDialog from './components/dialogs/SetNameDialog';
-import UserInfoMixin from './mixins/UserInfoMixin';
-import { store, mutations } from './store';
-import Vue from "vue";
+import SetNameDialog from './components/dialogs/SetNameDialog.vue';
+import UserInfoMixin from './mixins/UserInfoMixin.js';
+import { store, mutations } from './store.js';
 
 export default {
   name: 'App',

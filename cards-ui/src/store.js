@@ -1,6 +1,6 @@
-import Vue from 'vue'
+import { reactive } from 'vue'
 
-export const store = Vue.observable({
+export const store = reactive({
   state: {
     playerInfo: null,
     game: null,
@@ -11,18 +11,18 @@ export const store = Vue.observable({
 
 export const mutations = {
   setPlayerInfo(playerInfo) {
-    Vue.set(store.state, 'playerInfo', playerInfo);
+    store.state['playerInfo'] = playerInfo;
   },
 
   setGame(game) {
-    Vue.set(store.state, 'game', game);
+    store.state['game'] = game;
   },
 
   setTimer(timer) {
-    Vue.set(store.state, 'timer', timer);
+    store.state['timer'] = timer;
   },
 
   setTimerStart(timerStart) {
-    Vue.set(store.state, 'timerStart', timerStart);
+    store.state['timerStart'] = timerStart;
   }
 }

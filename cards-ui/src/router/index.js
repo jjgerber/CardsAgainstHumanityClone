@@ -1,12 +1,10 @@
-import Vue from 'vue'
-import VueRouter from 'vue-router'
+import { createWebHistory, createRouter } from "vue-router";
+
 import Lobbies from '../views/Lobbies.vue'
 import Game from '../views/Game.vue'
 import Settings from '@/views/Settings.vue'
 import About from '@/views/About.vue'
 import CreateLobby from '@/views/CreateGame.vue'
-
-Vue.use(VueRouter)
 
 const routes = [
   {
@@ -36,9 +34,10 @@ const routes = [
   }
 ]
 
-const router = new VueRouter({
-  base: process.env.BASE_URL,
+const router = createRouter({
+  history: createWebHistory(),
+  base: import.meta.env.BASE_URL,
   routes
 })
 
-export default router
+export default router;

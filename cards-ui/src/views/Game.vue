@@ -374,11 +374,11 @@
 </template>
 
 <script>
-  import { store, mutations } from "../store";
-  import Chat from "../components/Chat";
-  import GameSettings from "../components/GameSettings";
-  import GamesMixin from "../mixins/GamesMixin";
-  import UserInfoMixin from "../mixins/UserInfoMixin";
+  import { store, mutations } from "@/store.js";
+  import Chat from "../components/Chat.vue";
+  import GameSettings from "../components/GameSettings.vue";
+  import GamesMixin from "../mixins/GamesMixin.js";
+  import UserInfoMixin from "../mixins/UserInfoMixin.js";
 
   export default {
     name: 'Game',
