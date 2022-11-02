@@ -12,7 +12,7 @@
 </template>
 
 <script>
-import GameSettings from "../components/GameSettings";
+import GameSettings from "@/components/GameSettings.vue";
 
 export default {
 

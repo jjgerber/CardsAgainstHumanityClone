@@ -1,20 +1,21 @@
-import Vue from 'vue';
-import VueMoment from 'vue-moment';
-import SockJS from "sockjs-client";
+import { createApp } from 'vue';
+import SockJS from "sockjs-client/dist/sockjs"
 import Stomp from "webstomp-client";
+import moment from "moment";
 
 import App from './App.vue';
 import router from './router';
 import vuetify from './plugins/vuetify';
 
-Vue.config.productionTip = false;
-Vue.prototype.$socket = new SockJS('/socket');
-Vue.prototype.$stomp = Stomp.over(Vue.prototype.$socket);
+const app = createApp(App);
+const sock = new SockJS('/socket');
 
-Vue.use(VueMoment);
+app.config.globalProperties.$socket = sock;
+app.config.globalProperties.$stomp = Stomp.over(sock);
 
-new Vue({
-  router,
-  vuetify,
-  render: h => h(App),
-}).$mount('#app');
+app.use(vuetify);
+app.use(router);
+
+router.isReady().then(() => {
+  app.mount('#app');
+});

@@ -4,7 +4,7 @@ plugins {
 
 node {
     download = true
-    version = "14.19.1"
+    version = "16.16.0"
 }
 
 task buildVue(type: YarnTask, dependsOn: yarn_install) {

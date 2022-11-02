@@ -1,54 +1,33 @@
 <template>
   <v-app v-if="playerInfoReady && socketReady">
-    <v-navigation-drawer
-      v-model="drawer"
-      app
-      clipped
-    >
-      <v-list dense>
-        <v-list-item
-          link
-          @click="$router.push('/')"
-        >
-          <v-list-item-action>
-            <v-icon>mdi-account-group</v-icon>
-          </v-list-item-action>
-          <v-list-item-content>
-            <v-list-item-title>Lobbies</v-list-item-title>
-          </v-list-item-content>
-        </v-list-item>
-      </v-list>
-    </v-navigation-drawer>
-
-    <v-app-bar
-      app
-      clipped-left
-    >
-      <v-app-bar-nav-icon @click.stop="drawer = !drawer" />
-      <v-toolbar-title>Cards vs. Humanity</v-toolbar-title>
-
-      <v-progress-linear
-        v-model="timerPercent"
-        :active="!!timerPercent"
-        absolute
-        bottom
-        :color="timer > 10 ? 'green' : 'red'"
-      />
-
-      <v-spacer />
+    <v-app-bar>
+      <v-app-bar-nav-icon @click="drawer = !drawer" />
+      <v-app-bar-title>Cards vs. Humanity</v-app-bar-title>
       <v-btn
         icon
         @click="showSetNameDialog = true"
       >
         <v-icon>mdi-account</v-icon>
       </v-btn>
-      <span class="pa-2">{{ playerInfo.playerName }}</span>
+      <span class="pa-2 mr-4">{{ playerInfo.playerName }}</span>
     </v-app-bar>
 
+    <v-navigation-drawer v-model="drawer">
+      <v-list dense>
+        <v-list-item
+          link
+          @click="$router.push('/')"
+        >
+          <template v-slot:prepend>
+            <v-icon>mdi-account-group</v-icon>
+          </template>
+          <v-list-item-title>Lobbies</v-list-item-title>
+        </v-list-item>
+      </v-list>
+    </v-navigation-drawer>
+
     <v-main>
-      <v-fade-transition mode="out-in">
-        <router-view />
-      </v-fade-transition>
+      <router-view />
     </v-main>
 
     <set-name-dialog v-model="showSetNameDialog" />
@@ -68,10 +47,9 @@
 </template>
 
 <script>
-import SetNameDialog from './components/dialogs/SetNameDialog';
-import UserInfoMixin from './mixins/UserInfoMixin';
-import { store, mutations } from './store';
-import Vue from "vue";
+import SetNameDialog from './components/dialogs/SetNameDialog.vue';
+import UserInfoMixin from './mixins/UserInfoMixin.js';
+import { store, mutations } from './store.js';
 
 export default {
   name: 'App',
@@ -96,20 +74,7 @@ export default {
   computed: {
     currentYear() {
       return new Date().getFullYear();
-    },
-
-    timer() {
-      return store.state.timer;
-    },
-
-    timerStart () {
-      return store.state.timerStart;
-    },
-
-    timerPercent() {
-      return this.timerStart > 0 ? (this.timer / this.timerStart) * 100 : null;
-    },
-
+    }
   },
 
   watch: {
