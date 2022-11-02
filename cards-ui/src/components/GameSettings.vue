@@ -1,13 +1,16 @@
 <template>
   <v-card>
     <v-card-text>
+      <h2 class="text-left mb-4">
+        Settings
+      </h2>
       <v-form
         ref="form"
         v-model="valid"
       >
         <v-text-field
+          v-if="!gameConfig"
           v-model="name"
-          :disabled="!!gameConfig"
           :maxlength="20"
           counter
           :rules="[v => /^[a-zA-Z0-9 ]{1,20}$/.test(v) || 'Numbers and letters only. Required.']"
@@ -19,7 +22,9 @@
           :disabled="!userIsOwner || !!gameConfig"
           :max="10"
           :min="3"
+          :step="1"
           :tick-size="1"
+          color="blue"
         >
           <template v-slot:append>
             <span>{{ maxPlayers }}</span>
@@ -31,7 +36,9 @@
           :disabled="!userIsOwner"
           :max="15"
           :min="1"
+          :step="1"
           :tick-size="1"
+          color="blue"
         >
           <template v-slot:append>
             <span>{{ maxScore }}</span>
@@ -45,6 +52,7 @@
           :min="15"
           :step="5"
           :tick-size="5"
+          color="blue"
         >
           <template v-slot:append>
             <span>{{ turnTimeLimit }}</span>
@@ -58,56 +66,38 @@
           max-height="310"
           style="overflow-y: auto"
         >
-          <v-list-item-group
+          <v-chip-group
             v-model="selectedDecks"
+            selected-class="text-primary"
+            column
             multiple
-            :disabled="true"
           >
-            <template v-for="(deck, i) in decks">
-              <v-divider
-                v-if="!deck"
-                :key="`deck-divider-${i}`"
-              />
-              <v-list-item
-                v-else
-                :key="`deck-${i}`"
+            <template v-for="deck in decks">
+              <v-chip
                 :value="deck.uuid"
-                active-class="text--accent-4"
                 :disabled="!userIsOwner"
+                variant="outlined"
               >
-                <template v-slot:default="{ active, toggle }">
-                  <v-list-item-content>
-                    <v-list-item-title v-text="deck.deckName" />
-                  </v-list-item-content>
-                  <v-list-item-action>
-                    <v-checkbox
-                      :input-value="active"
-                      :true-value="deck.uuid"
-                      color="accent-4"
-                      @click="userIsOwner ? toggle : null"
-                    />
-                  </v-list-item-action>
-                </template>
-              </v-list-item>
+                {{ deck.deckName }}
+              </v-chip>
             </template>
-          </v-list-item-group>
+          </v-chip-group>
         </v-list>
       </v-form>
     </v-card-text>
     <v-divider />
-    <v-card-actions v-if="userIsOwner">
+    <v-card-actions class="justify-end" v-if="userIsOwner">
       <v-slide-y-transition>
         <v-alert
           v-if="hasChanges"
           class="mb-0 mr-2"
           width="100%"
-          dense
+          density="compact"
           color="blue"
         >
           You have unsaved changes.
         </v-alert>
       </v-slide-y-transition>
-      <v-spacer />
       <div class="ma-1">
         <v-btn
           v-if="!gameConfig"

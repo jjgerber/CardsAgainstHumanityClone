@@ -32,13 +32,13 @@
 
               <v-tooltip
                 v-if="playerIsOwner && isLobby"
-                bottom
+                location="bottom"
                 :disabled="players.length >= 3"
               >
-                <template v-slot:activator="{ on }">
+                <template v-slot:activator="{ props }">
                   <div
                     class="d-inline-block"
-                    v-on="on"
+                    v-bind="props"
                   >
                     <v-btn
                       class="d-inline-block ml-2"
@@ -57,21 +57,27 @@
             <v-col cols="auto">
               <v-scale-transition>
                 <v-chip
+                  class="mt-1"
                   v-if="timerCount > 0"
-                  class="d-inline-block"
-                  pill
+                  variant="outlined"
                   :color="timerCount > 10 ? 'green' : 'red'"
                   text-color="white"
                   ripple
                 >
-                  <v-avatar left>
-                    <v-icon>mdi-alarm</v-icon>
-                  </v-avatar>
+                  <v-icon start :color="timerCount > 10 ? 'green' : 'red'" icon="mdi-alarm"></v-icon>
                   {{ timerCount }}
                 </v-chip>
               </v-scale-transition>
             </v-col>
           </v-row>
+
+          <v-progress-linear
+            v-model="timerPercent"
+            :active="!!timerPercent"
+            :color="timerCount > 10 ? 'green' : 'red'"
+            striped
+            rounded
+          />
 
           <v-slide-y-reverse-transition>
             <v-alert
@@ -125,6 +131,7 @@
                     <v-alert
                       v-if="judgeDidntChoose && game.phraseSelections.length === 0"
                       key="no-phrases"
+                      class="mb-4 text-center"
                       type="error"
                     >
                       No players chose a phrase to be judged.
@@ -132,6 +139,7 @@
                     <v-alert
                       v-else-if="judgeDidntChoose && game.phraseSelections.length > 0"
                       key="no-judgement"
+                      class="mb-4 text-center"
                       type="error"
                     >
                       The judge didn't choose a winner in time. Your cards have been returned.
@@ -139,12 +147,14 @@
                     <v-alert
                       v-else-if="playerIsJudge && isStateJudging && judgeSelection != null"
                       key="judge-confirm"
-                      color="grey"
-                      text
+                      class="mb-4 text-center"
+                      color="grey-darken-3"
                       dense
                     >
-                      Confirm your selection? <v-btn
+                      <span>Confirm your selection? </span>
+                      <v-btn
                         color="green"
+                        size="x-small"
                         @click="confirmJudgement()"
                       >
                         Confirm
@@ -153,15 +163,15 @@
                     <v-alert
                       v-else-if="playerIsJudge && isStateJudging"
                       key="judge-choose"
-                      color="grey"
-                      text
+                      class="mb-4 text-center"
+                      color="grey-darken-3"
                     >
                       Choose the winner.
                     </v-alert>
                     <v-alert
                       v-else-if="isStateDoneJudging && judgeChoice !== null"
                       key="winner"
-                      class="text-center"
+                      class="mb-4 text-center"
                       color="green"
                     >
                       {{ game.lastWinningPlayer.playerName }} won!
@@ -170,9 +180,8 @@
                     <v-alert
                       v-else-if="isStateJudging"
                       key="currently-judging"
-                      class="mb-0 text-center"
-                      color="grey"
-                      text
+                      class="mb-4 text-center"
+                      color="grey-darken-3"
                     >
                       {{ game.judgingPlayer.playerName }} is currently judging...
                     </v-alert>
@@ -249,30 +258,37 @@
                   <v-scroll-y-transition mode="out-in">
                     <v-alert
                       v-if="playerIsJudge"
+                      class="mb-4"
                       key="choosing-judging"
-                      color="grey"
-                      text
+                      color="grey-darken-3"
                     >
                       You are judging.
                     </v-alert>
                     <v-alert
                       v-else-if="isStateChoosing && currentCard.numPhrases === selections.length"
+                      class="mb-4"
                       key="choosing-select"
-                      color="grey"
-                      text
+                      color="grey-darken-3"
                     >
-                      <span v-if="playersWhoHaveChosen.includes(playerInfo.name)">You have made your selection for this round.</span>
-                      <span v-else>Confirm your selections? <v-btn
-                        color="green"
-                        small
-                        @click="confirmSelections"
-                      >Confirm</v-btn></span>
+                      <span v-if="playersWhoHaveChosen.includes(playerInfo.name)">
+                        You have made your selection for this round.
+                      </span>
+                      <span v-else>
+                        Confirm your selections?
+                        <v-btn
+                          color="green"
+                          size="x-small"
+                          @click="confirmSelections"
+                        >
+                          Confirm
+                        </v-btn>
+                      </span>
                     </v-alert>
                     <v-alert
                       v-else-if="isStateChoosing"
+                      class="mb-4"
                       key="choosing-need-to-pick"
-                      color="grey"
-                      text
+                      color="grey-darken-3"
                     >
                       Choose {{ currentCard.numPhrases }} white card{{ currentCard.numPhrases > 1 ? 's' : '' }}.
                     </v-alert>
@@ -305,13 +321,13 @@
                 <v-card>
                   <v-card-title>Players</v-card-title>
                   <v-card-text class="text-left">
-                    <v-simple-table>
+                    <v-table :hover="true">
                       <template v-slot:default>
                         <tbody>
                         <tr
                           v-for="player in players"
                           :key="`player-${player.name}`"
-                          :class="{'green': isStateDoneJudging && judgeChoice !== null ? game.lastWinningPlayer.name === player.name : false}"
+                          :class="{'bg-green': isStateDoneJudging && judgeChoice !== null ? game.lastWinningPlayer.name === player.name : false}"
                         >
                           <td width="100%">
                             <v-icon
@@ -345,16 +361,16 @@
                         </tr>
                         </tbody>
                       </template>
-                    </v-simple-table>
+                    </v-table>
                   </v-card-text>
                   <v-divider />
                   <v-card-actions>
                     <div class="pa-2">
-                      <span class="blue--text mr-1">{{ game.numPlayers }} / {{ game.gameConfig.maxPlayers }}</span> Players
+                      <span class="text-blue mr-1">{{ game.numPlayers }} / {{ game.gameConfig.maxPlayers }}</span> Players
                     </div>
                     <v-spacer />
                     <div class="pa-2">
-                      Winning Score: <span class="blue--text">{{ game.gameConfig.maxScore }}</span>
+                      Winning Score: <span class="text-blue">{{ game.gameConfig.maxScore }}</span>
                     </div>
                   </v-card-actions>
                 </v-card>
@@ -435,6 +451,10 @@
         set: (timerStart) => {
           mutations.setTimerStart(timerStart);
         }
+      },
+
+      timerPercent() {
+        return this.timerStart > 0 ? (this.timerCount / this.timerStart) * 100 : null;
       },
 
       state() {
@@ -609,7 +629,7 @@
       },
 
       phraseClicked(phrase) {
-        if (this.isStateChoosing) {
+        if (this.isStateChoosing && !this.playerIsJudge) {
           if (this.selections.includes(phrase.uuid)) {
             // User is clicking a card already selected, unselect it.
             this.selections = this.selections.filter((value => value !== phrase.uuid));
@@ -660,13 +680,13 @@
   }
 
   .game-card {
-    width: 150px;
+    width: 150px !important;
+    max-width: 150px;
     height: 180px;
     font-size: 12px;
   }
 
   .card-group {
-    white-space: nowrap;
     transform: scale(1.0);
     transition: 0.2s;
   }

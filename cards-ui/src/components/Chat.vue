@@ -12,10 +12,10 @@
           dense
         >
           <v-col
-            class="font-italic blue--text"
+            class="font-italic text-blue"
             cols="auto"
           >
-            {{ msg.messageTime | moment("h:mm:ss a") }}
+            {{ formatTime(msg.messageTime) }}
           </v-col>
           <v-col
             v-if="msg.playerId !== 'SERVER'"
@@ -31,8 +31,9 @@
       </v-card-text>
     </div>
     <div>
-      <v-card-text class="mt-0 pt-0 text-left">
+      <v-card-text class="mt-4 pt-0 text-left">
         <v-text-field
+          density="compact"
           v-model="chatMessage"
           @keypress.enter="sendMessage()"
         /><v-btn
@@ -48,6 +49,8 @@
 </template>
 
 <script>
+  import moment from "moment";
+
   export default {
     name: 'Chat',
 
@@ -97,6 +100,10 @@
           this.$stomp.send('/app/chat/' + this.gameName, this.chatMessage);
           this.chatMessage = '';
         }
+      },
+
+      formatTime(time) {
+        return moment(time).format('h:mm:ss a');
       }
     }
   }

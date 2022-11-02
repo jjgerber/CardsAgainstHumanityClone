@@ -8,17 +8,7 @@
         ref="form"
         v-model="valid"
       >
-        <template v-slot:activator="{ on }">
-          <v-btn
-            color="red lighten-2"
-            dark
-            v-on="on"
-          >
-            Click Me
-          </v-btn>
-        </template>
-
-        <v-card color="grey darken-3">
+        <v-card>
           <v-card-title
             class="headline"
             primary-title
@@ -83,7 +73,7 @@ export default {
   ],
 
   props: {
-    value: Boolean
+    modelValue: Boolean
   },
 
   data () {
@@ -96,13 +86,13 @@ export default {
   },
 
   watch: {
-    value () {
-      this.dialog = this.value
+    modelValue() {
+      this.dialog = this.modelValue;
     },
 
-    dialog () {
+    dialog() {
       if (this.dialog === false) {
-        this.$emit('input', false)
+        this.$emit('update:modelValue', false);
       } else {
         this.userName = this.playerInfo.playerName;
       }

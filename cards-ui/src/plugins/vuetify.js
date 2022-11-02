@@ -8,12 +8,23 @@ import { createVuetify } from 'vuetify';
 
 // Styles
 import 'vuetify/styles';
+import colors from 'vuetify/lib/util/colors';
+
+const cardsTheme = {
+  dark: true,
+  colors: {
+    primary: colors.blue.base,
+    secondary: colors.green.base
+  }
+}
 
 export default createVuetify({
   theme: {
-    defaultTheme: 'dark'
+    defaultTheme: 'cardsTheme',
+    themes: {
+      cardsTheme
+    }
   },
-  // https://next.vuetifyjs.com/en/getting-started/installation/
   components,
   directives,
 });
