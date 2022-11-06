@@ -70,14 +70,16 @@
 </template>
 
 <script>
-  import LobbyMixin from '../mixins/GamesMixin'
+  import GameActions from '@/composition/GameActions.js';
 
   export default {
     name: 'HelloWorld',
 
-    mixins: [
-      LobbyMixin
-    ],
+    setup() {
+      const { callGetAllLobbies } = GameActions();
+
+      return { callGetAllLobbies };
+    },
 
     data() {
       return {

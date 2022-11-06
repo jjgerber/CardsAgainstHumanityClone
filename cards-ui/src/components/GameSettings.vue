@@ -137,14 +137,19 @@
 </template>
 
 <script>
-  import axios from 'axios'
-  import LobbyMixin from '../mixins/GamesMixin'
+  import axios from 'axios';
+  import GameActions from '@/composition/GameActions.js';
 
   export default {
+    setup() {
+      const {
+        callCreateGame,
+        callUpdateGame
+      } = GameActions();
 
-    mixins: [
-      LobbyMixin
-    ],
+      return { callCreateGame, callUpdateGame };
+    },
+
     props: {
       gameName: {
         type: String,
@@ -221,9 +226,10 @@
 
       create () {
         if (this.valid) {
-          this.callCreateGame(this.name, this.maxPlayers, this.maxScore, this.turnTimeLimit, this.selectedDecks).then(() => {
-            this.$router.push(`/game/${this.name}`)
-          })
+          this.callCreateGame(this.name, this.maxPlayers, this.maxScore, this.turnTimeLimit, this.selectedDecks)
+            .then(() => {
+              this.$router.push(`/game/${this.name}`)
+            })
             .catch((error) => {
               this.error = error.response.body.message;
             });

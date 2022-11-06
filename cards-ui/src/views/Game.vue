@@ -293,256 +293,152 @@
                       Choose {{ currentCard.numPhrases }} white card{{ currentCard.numPhrases > 1 ? 's' : '' }}.
                     </v-alert>
                   </v-scroll-y-transition>
-                  <v-card
-                    v-for="(phrase, idx) in playerPhrases"
-                    :key="`player-phrase-${idx}`"
-                    :color="selections.includes(phrase.uuid) ? 'green lighten-2' : 'white'"
-                    light
-                    class="game-card pa-2 text-center align-center d-inline-flex ma-1"
-                    :class="playerIsJudge ? 'grey' : 'white'"
-                    raised
-                    @click="phraseClicked(phrase)"
-                  >
-                    <v-card-text
-                      class="pa-0"
-                      style="height: 100%"
-                      v-html="phrase.text"
-                    />
-                  </v-card>
+                  <cards :cards="playerPhrases" :selections="selections" @phrase-clicked="phraseClicked($event)"/>
                 </v-card-text>
               </v-card>
             </div>
           </v-scroll-y-transition>
 
           <div class="mt-4">
-
             <v-row>
               <v-col class="players-container">
-                <v-card>
-                  <v-card-title>Players</v-card-title>
-                  <v-card-text class="text-left">
-                    <v-table :hover="true">
-                      <template v-slot:default>
-                        <tbody>
-                        <tr
-                          v-for="player in players"
-                          :key="`player-${player.name}`"
-                          :class="{'bg-green': isStateDoneJudging && judgeChoice !== null ? game.lastWinningPlayer.name === player.name : false}"
-                        >
-                          <td width="100%">
-                            <v-icon
-                              v-if="player.name === game.owner.name"
-                              size="16"
-                              color="primary"
-                            >
-                              mdi-crown
-                            </v-icon>
-                            {{ player.playerName }}
-                          </td>
-                          <td md="auto">
-                            <v-icon
-                              v-if="playersWhoHaveChosen.includes(player.name)"
-                              size="16"
-                              color="primary"
-                            >
-                              mdi-check
-                            </v-icon>
-                            <v-icon
-                              v-else-if="game.judgingPlayer ? player.name === game.judgingPlayer.name : false"
-                              size="16"
-                              color="primary"
-                            >
-                              mdi-gavel
-                            </v-icon>
-                          </td>
-                          <td md="auto">
-                            {{ player.score }}
-                          </td>
-                        </tr>
-                        </tbody>
-                      </template>
-                    </v-table>
-                  </v-card-text>
-                  <v-divider />
-                  <v-card-actions>
-                    <div class="pa-2">
-                      <span class="text-blue mr-1">{{ game.numPlayers }} / {{ game.gameConfig.maxPlayers }}</span> Players
-                    </div>
-                    <v-spacer />
-                    <div class="pa-2">
-                      Winning Score: <span class="text-blue">{{ game.gameConfig.maxScore }}</span>
-                    </div>
-                  </v-card-actions>
-                </v-card>
+                <players />
               </v-col>
-
               <v-col class="chat-container">
-                <chat :game-name="gameName" />
+                <chat />
               </v-col>
             </v-row>
-
           </div>
         </div>
       </v-col>
     </v-row>
-        <!-- {{ state }} -->
   </v-container>
 </template>
 
 <script>
   import { store, mutations } from "@/store.js";
-  import Chat from "../components/Chat.vue";
-  import GameSettings from "../components/GameSettings.vue";
-  import GamesMixin from "../mixins/GamesMixin.js";
-  import UserInfoMixin from "../mixins/UserInfoMixin.js";
+  import Chat from "@/components/Chat.vue";
+  import GameSettings from "@/components/GameSettings.vue";
+  import GameActions from "@/composition/GameActions.js";
+  import GameData from "@/composition/GameData.js";
+  import PlayerActions from "@/composition/PlayerActions.js";
+  import PlayerData from "@/composition/PlayerData.js";
+  import Players from "@/components/Players.vue";
+  import Cards from "@/components/Cards.vue";
 
   export default {
     name: 'Game',
 
-    comments: [
-      Chat
-    ],
-
     components: {
+      Cards,
+      Players,
       Chat,
       GameSettings
     },
 
-    mixins: [
-      GamesMixin,
-      UserInfoMixin
-    ],
+    setup() {
+      const {
+        game,
+        players,
+        playerIsOwner,
+        playerIsJudge,
+        playerHasJoined,
+        isGameFull,
+        playersWhoHaveChosen,
+        gameStateFormatted,
+        isAbandoned,
+        isLobby,
+        isStateChoosing,
+        isStateJudging,
+        isStateDoneJudging,
+        isStateGameOver,
+        gameTimeout,
+        gameStateTime,
+        currentCard,
+        judgeDidntChoose,
+        judgeChoice,
+        gameWinner
+      } = GameData();
+
+      const {
+        callCreateGame,
+        callUpdateGame,
+        callGetGame,
+        callJoinGame,
+        callStartGame,
+        callSelectPhrases,
+        callJudgeVote,
+        callLeaveGame,
+        callGetAllLobbies
+      } = GameActions();
+
+      const {
+        retrievePlayerInfo,
+        setName
+      } = PlayerActions();
+
+      const {
+        playerInfo,
+        playerPhrases
+      } = PlayerData();
+
+      return {
+        game,
+        players,
+        playerIsOwner,
+        playerIsJudge,
+        playerHasJoined,
+        isGameFull,
+        playersWhoHaveChosen,
+        gameStateFormatted,
+        isAbandoned,
+        isLobby,
+        isStateChoosing,
+        isStateJudging,
+        isStateDoneJudging,
+        isStateGameOver,
+        gameTimeout,
+        gameStateTime,
+        currentCard,
+        judgeDidntChoose,
+        judgeChoice,
+        gameWinner,
+        callCreateGame,
+        callUpdateGame,
+        callGetGame,
+        callJoinGame,
+        callStartGame,
+        callSelectPhrases,
+        callJudgeVote,
+        callLeaveGame,
+        callGetAllLobbies,
+        retrievePlayerInfo,
+        setName,
+        playerInfo,
+        playerPhrases
+      }
+    },
 
     data: () => {
       return {
         selections: [],
         judgeSelection: null,
-        hover: null,
         hasError: false,
         error: null,
         timer: null,
-        gameSubscription: null
+        gameSubscription: null,
+        timerCount: null,
+        timerStart: null
       }
     },
 
     computed: {
-      game: {
-        get: () => {
-          return store.state.game;
-        },
-        set: (game) => {
-          mutations.setGame(game);
-        }
-      },
-
-      timerCount: {
-        get: () => {
-          return store.state.timer;
-        },
-        set: (timerCount) => {
-          mutations.setTimer(timerCount);
-        }
-      },
-
-      timerStart: {
-        get: () => {
-          return store.state.timerStart;
-        },
-        set: (timerStart) => {
-          mutations.setTimerStart(timerStart);
-        }
-      },
-
       timerPercent() {
         return this.timerStart > 0 ? (this.timerCount / this.timerStart) * 100 : null;
       },
 
-      state() {
-        return store.state;
-      },
-
       gameName () {
         return this.$route.params.name;
-      },
-
-      players() {
-        return this.game ? this.game.players : [];
-      },
-
-      playerPhrases() {
-        return this.playerInfo.phrases;
-      },
-
-      playerIsOwner() {
-        return this.game && this.game.owner ? this.game.owner.name === this.playerInfo.name : false;
-      },
-
-      playerIsJudge() {
-        return this.game && this.game.judgingPlayer ? this.playerInfo.name === this.game.judgingPlayer.name : false;
-      },
-
-      playerHasJoined() {
-        return this.game ? this.playerInfo.currentGameUuid === this.game.uuid : false;
-      },
-
-      isGameFull() {
-        return this.game && (this.game.numPlayers >= this.game.gameConfig.maxPlayers);
-      },
-
-      playersWhoHaveChosen() {
-        return this.game ? this.game.playersWhoHaveChosen.map(player => player.name) : [];
-      },
-
-      gameStateFormatted() {
-        return this.game ? this.game.gameState.replace('_', ' ').toLowerCase() : '';
-      },
-
-      isAbandoned() {
-        return this.game && this.game.gameState === 'ABANDONED';
-      },
-
-      isLobby() {
-        return this.game && this.game.gameState === 'LOBBY';
-      },
-
-      isStateChoosing() {
-        return this.game && this.game.gameState === 'CHOOSING';
-      },
-
-      isStateJudging() {
-        return this.game && this.game.gameState === 'JUDGING';
-      },
-
-      isStateDoneJudging() {
-        return this.game && this.game.gameState === 'DONE_JUDGING';
-      },
-
-      isStateGameOver() {
-        return this.game && this.game.gameState === 'GAME_OVER';
-      },
-
-      gameTimeout() {
-        return this.game && this.game.gameTimeoutTime ? Date.parse(this.game.gameTimeoutTime) : null;
-      },
-
-      gameStateTime() {
-        return this.game && this.game.gameStateTime ? Date.parse(this.game.gameStateTime) : null;
-      },
-
-      currentCard() {
-        return this.game && this.game.currentCard ? this.game.currentCard : null;
-      },
-
-      judgeDidntChoose() {
-        return this.game && this.game.gameState === 'DONE_JUDGING' && this.game.judgeChoiceWinner == null;
-      },
-
-      judgeChoice() {
-        return this.game ? this.game.judgeChoiceWinner : null;
-      },
-
-      gameWinner() {
-        return this.isStateGameOver ? this.game.gameWinner : null;
       }
     },
 
@@ -597,7 +493,9 @@
     methods: {
       getGameData () {
         this.callGetGame(this.gameName).then((game) => {
+          console.log("Setting Game: ", game);
           this.game = game;
+          console.log("Store Game: ", store.state.game);
         }).catch((error) => {
           this.$router.push('/');
         });
@@ -706,11 +604,6 @@
 
   .white-card-holder {
     min-width: 350px;
-  }
-
-  .chat {
-    max-height: 500px;
-    overflow-y: auto;
   }
 
   .players-container {

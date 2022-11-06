@@ -2,6 +2,7 @@ package org.j3y.cards.controller;
 
 import com.fasterxml.jackson.annotation.JsonView;
 import org.j3y.cards.exception.InvalidActionException;
+import org.j3y.cards.model.Game;
 import org.j3y.cards.model.Player;
 import org.j3y.cards.model.Views;
 import org.j3y.cards.service.GameWebsocketService;
@@ -39,6 +40,7 @@ public class PlayerController extends BaseController {
         }
 
         Player player = getPlayer();
+        String previousName = player.getPlayerName();
         player.setPlayerName(name);
 
         Cookie nameCookie = new Cookie("playerName", UriUtils.encode(name, StandardCharsets.UTF_8));
@@ -50,7 +52,9 @@ public class PlayerController extends BaseController {
 
 
         if (player.getCurrentGame() != null) {
-            gameWebsocketService.sendGameUpdate(player.getCurrentGame());
+            Game game = player.getCurrentGame();
+            gameWebsocketService.sendGameUpdate(game);
+            gameWebsocketService.sendGameChatMessage(game, previousName + " changed their name to " + name);
         }
 
         return player;

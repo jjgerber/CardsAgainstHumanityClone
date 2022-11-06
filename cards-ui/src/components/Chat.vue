@@ -54,13 +54,6 @@
   export default {
     name: 'Chat',
 
-    props: {
-      gameName: {
-        type: String,
-        required: true
-      }
-    },
-
     data: () => {
       return {
         chatMessage: '',
@@ -70,6 +63,9 @@
     },
 
     computed: {
+      gameName () {
+        return this.$route.params.name;
+      }
     },
 
     mounted() {

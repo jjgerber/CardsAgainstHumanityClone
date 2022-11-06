@@ -3,9 +3,7 @@ import { reactive } from 'vue'
 export const store = reactive({
   state: {
     playerInfo: null,
-    game: null,
-    timerStart: null,
-    timer: null
+    game: null
   }
 })
 

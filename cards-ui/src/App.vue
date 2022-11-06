@@ -48,19 +48,23 @@
 
 <script>
 import SetNameDialog from './components/dialogs/SetNameDialog.vue';
-import UserInfoMixin from './mixins/UserInfoMixin.js';
-import { store, mutations } from './store.js';
+import PlayerData from '@/composition/PlayerData.js';
+import PlayerActions from '@/composition/PlayerActions.js';
+import { mutations } from './store.js';
 
 export default {
   name: 'App',
 
+  setup() {
+    const { playerInfo } = PlayerData();
+    const { retrievePlayerInfo } = PlayerActions();
+
+    return { playerInfo, retrievePlayerInfo };
+  },
+
   components: {
     SetNameDialog
   },
-
-  mixins: [
-    UserInfoMixin
-  ],
 
   data: () => ({
     showSetNameDialog: false,

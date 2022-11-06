@@ -65,12 +65,19 @@
 </template>
 
 <script>
-import UserInfoMixin from '@/mixins/UserInfoMixin'
+import PlayerActions from '@/composition/PlayerActions.js';
+import PlayerData from '@/composition/PlayerData.js';
 
 export default {
-  mixins: [
-    UserInfoMixin
-  ],
+  setup() {
+    const { setName } = PlayerActions();
+    const { playerInfo } = PlayerData();
+
+    return {
+      setName,
+      playerInfo
+    };
+  },
 
   props: {
     modelValue: Boolean

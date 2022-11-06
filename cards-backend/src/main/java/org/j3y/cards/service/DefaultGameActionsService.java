@@ -128,23 +128,23 @@ public class DefaultGameActionsService implements GameActionsService {
             }
 
             if (!game.hasPlayer(selectingPlayer)) {
-                logger.error("Player is not a member of this game.");
-                throw new InvalidActionException("Player is not a member of this game.");
+                logger.error("You are not a member of this game.");
+                throw new InvalidActionException("You are not a member of this game.");
             }
 
             if (!selectingPlayer.getSelectedPhrases().isEmpty()) {
-                logger.error("Player has already selected for this turn.");
-                throw new InvalidActionException("Player has already selected a phrase for this turn.");
+                logger.error("You have already selected for this turn.");
+                throw new InvalidActionException("You have already selected a phrase for this turn.");
             }
 
             if (game.getJudgingPlayer().equals(selectingPlayer)) {
-                logger.error("Player cannot select cards because player is a judge for this round.");
-                throw new InvalidActionException("Player cannot select cards because player is a judge for this round.");
+                logger.error("You cannot select cards because you're a judge for this round.");
+                throw new InvalidActionException("You cannot select cards because you're a judge for this round.");
             }
 
             if (game.getCurrentCard().getNumPhrases() != selectedPhraseIds.size()) {
                 logger.error("Player selected an incorrect amount of phrases for this card.");
-                throw new InvalidActionException("Player selected an incorrect amount of phrases for this card.");
+                throw new InvalidActionException("You selected an incorrect amount of phrases for this card.");
             }
 
             // Make sure they're in the order that they were selected in.
@@ -153,7 +153,7 @@ public class DefaultGameActionsService implements GameActionsService {
                 Phrase selectedPhrase = selectingPlayer.getPhrases().stream()
                         .filter(phrase -> phrase.getUuid().equals(phraseUuid))
                         .findFirst()
-                        .orElseThrow(() -> new InvalidActionException("Player does not have one or more of the selected phrases"));
+                        .orElseThrow(() -> new InvalidActionException("You do not have one or more of the selected phrases"));
                 phraseSelections.add(selectedPhrase);
                 selectingPlayer.getSelectedPhrases().add(selectedPhrase);
             }
@@ -193,7 +193,7 @@ public class DefaultGameActionsService implements GameActionsService {
             }
 
             if (!game.getJudgingPlayer().equals(votingPlayer)) {
-                throw new InvalidActionException("Player is not the judging player.");
+                throw new InvalidActionException("You are not the judging player.");
             }
 
             game.setJudgeChoiceWinner(voteIndex);
@@ -217,15 +217,15 @@ public class DefaultGameActionsService implements GameActionsService {
             joiningPlayer.getMutex().acquire(); // Lock player for state modifications.
 
             if (game.isGameFull()) {
-                throw new InvalidActionException("Player cannot join because the game is full.");
+                throw new InvalidActionException("You cannot join because the game is full.");
             }
 
             if (game.hasPlayer(joiningPlayer)) {
-                throw new InvalidActionException("Player has already joined this game.");
+                throw new InvalidActionException("You has already joined this game.");
             }
 
             if (joiningPlayer.getCurrentGame() != null) {
-                throw new InvalidActionException("Player is already in a game and needs to leave it in order to join.");
+                throw new InvalidActionException("You are already in a game and need to leave it in order to join.");
             }
 
             if (game.getGameState() != GameState.LOBBY) {
@@ -266,7 +266,7 @@ public class DefaultGameActionsService implements GameActionsService {
             isLastPlayerInGame = game.getPlayers().size() == 1;
 
             if (!game.hasPlayer(leavingPlayer)) {
-                throw new InvalidActionException("Player is not a member of this game.");
+                throw new InvalidActionException("You are not a member of this game.");
             }
 
             if (!leavingPlayer.getSelectedPhrases().isEmpty() && game.getGameState() == GameState.JUDGING) {
