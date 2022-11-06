@@ -76,7 +76,7 @@
       this.connect();
     },
 
-    destroyed() {
+    unmounted() {
       if (this.chatSubscription) {
         console.log(`Unsubscribing from game ${this.gameName}'s chat.`);
         this.chatSubscription.unsubscribe();
@@ -88,7 +88,7 @@
         this.chatSubscription = this.$stomp.subscribe('/topic/chat/' + this.gameName, tick => {
           this.chatMessages.push(JSON.parse(tick.body));
           this.$nextTick(() => {
-            var chat = this.$el.querySelector("#chat");
+            const chat = this.$el.querySelector("#chat");
             chat.scrollTop = chat.scrollHeight;
           });
         });
@@ -97,7 +97,10 @@
 
       sendMessage() {
         if (this.chatMessage && this.chatMessage.length > 0) {
-          this.$stomp.send('/app/chat/' + this.gameName, this.chatMessage);
+          this.$stomp.publish({
+            destination: '/app/chat/' + this.gameName,
+            body: this.chatMessage
+          });
           this.chatMessage = '';
         }
       },
@@ -110,7 +113,6 @@
 </script>
 
 <style>
-
   #chat {
     max-height: 200px;
     overflow-y: auto;

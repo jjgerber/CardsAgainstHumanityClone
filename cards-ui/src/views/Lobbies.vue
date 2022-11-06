@@ -117,11 +117,9 @@
       })
     },
 
-    destroyed() {
-      if (this.stompSubscription) {
-        console.log("Unsubscribing from lobby topic.");
-        this.stompSubscription.unsubscribe();
-      }
+    unmounted() {
+      console.log("Unsubscribing from lobby topic.");
+      this.stompSubscription.unsubscribe();
     },
 
     methods: {

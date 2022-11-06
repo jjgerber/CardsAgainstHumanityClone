@@ -8,56 +8,73 @@
         ref="form"
         v-model="valid"
       >
-        <v-text-field
-          v-if="!gameConfig"
-          v-model="name"
-          :maxlength="20"
-          counter
-          :rules="[v => /^[a-zA-Z0-9 ]{1,20}$/.test(v) || 'Numbers and letters only. Required.']"
-          label="Lobby Name"
-        />
-        <v-slider
-          v-model="maxPlayers"
-          label="Max Players"
-          :disabled="!userIsOwner || !!gameConfig"
-          :max="10"
-          :min="3"
-          :step="1"
-          :tick-size="1"
-          color="blue"
-        >
-          <template v-slot:append>
-            <span>{{ maxPlayers }}</span>
-          </template>
-        </v-slider>
-        <v-slider
-          v-model="maxScore"
-          label="Max Score (Game Winning Score)"
-          :disabled="!userIsOwner"
-          :max="15"
-          :min="1"
-          :step="1"
-          :tick-size="1"
-          color="blue"
-        >
-          <template v-slot:append>
-            <span>{{ maxScore }}</span>
-          </template>
-        </v-slider>
-        <v-slider
-          v-model="turnTimeLimit"
-          label="Turn Time Limit (seconds)"
-          :disabled="!userIsOwner"
-          :max="120"
-          :min="15"
-          :step="5"
-          :tick-size="5"
-          color="blue"
-        >
-          <template v-slot:append>
-            <span>{{ turnTimeLimit }}</span>
-          </template>
-        </v-slider>
+        <v-container>
+          <v-row>
+            <v-text-field
+              v-if="!gameConfig"
+              v-model="name"
+              :maxlength="20"
+              counter
+              :rules="[v => /^[a-zA-Z0-9 ]{1,20}$/.test(v) || 'Numbers and letters only. Required.']"
+              label="Lobby Name"
+            />
+          </v-row>
+          <v-row>
+            <span class="pl-2 pb-4 pt-4 v-label">Max Players</span>
+          </v-row>
+          <v-row>
+            <v-slider
+              v-model="maxPlayers"
+              :disabled="!userIsOwner || !!gameConfig"
+              :max="10"
+              :min="3"
+              :step="1"
+              :tick-size="1"
+              color="blue"
+            >
+              <template v-slot:append>
+                <span>{{ maxPlayers }}</span>
+              </template>
+            </v-slider>
+          </v-row>
+          <v-row>
+            <span class="pl-2 pb-4 pt-2 v-label">Max Score (Game Winning Score)</span>
+          </v-row>
+          <v-row>
+            <v-slider
+              v-model="maxScore"
+              :disabled="!userIsOwner"
+              :max="15"
+              :min="1"
+              :step="1"
+              :tick-size="1"
+              color="blue"
+            >
+              <template v-slot:append>
+                <span>{{ maxScore }}</span>
+              </template>
+            </v-slider>
+          </v-row>
+          <v-row>
+            <span class="pl-2 pb-4 pt-2 v-label">Turn Time Limit (seconds)</span>
+          </v-row>
+          <v-row>
+            <v-slider
+              v-model="turnTimeLimit"
+              :disabled="!userIsOwner"
+              :max="120"
+              :min="15"
+              :step="5"
+              :tick-size="5"
+              color="blue"
+            >
+              <template v-slot:append>
+                <span>{{ turnTimeLimit }}</span>
+              </template>
+            </v-slider>
+          </v-row>
+        </v-container>
+
         <h2 class="text-left mb-2">
           Decks
         </h2>

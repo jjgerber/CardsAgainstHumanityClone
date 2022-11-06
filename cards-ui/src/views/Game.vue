@@ -584,11 +584,9 @@
       this.connect();
     },
 
-    destroyed() {
-      if (this.gameSubscription) {
-        console.log(`Unsubscribing from game subscription.`)
-        this.gameSubscription.unsubscribe();
-      }
+    unmounted() {
+      console.log(`Unsubscribing from game subscription.`)
+      this.gameSubscription.unsubscribe();
 
       clearInterval(this.timer);
       this.game = null;

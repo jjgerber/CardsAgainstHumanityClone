@@ -1,5 +1,5 @@
 <template>
-  <v-app v-if="playerInfoReady && socketReady">
+  <v-app v-if="playerInfoReady">
     <v-app-bar>
       <v-app-bar-nav-icon @click="drawer = !drawer" />
       <v-app-bar-title>Cards vs. Humanity</v-app-bar-title>
@@ -67,7 +67,6 @@ export default {
     drawer: null,
     right: null,
     playerInfoReady: false,
-    socketReady: false,
     playerInfoSubscription: null
   }),
 
@@ -77,46 +76,27 @@ export default {
     }
   },
 
-  watch: {
-    socketReady() {
-      if (!this.socketReady) {
-        console.log("Socket connection lost. Reconnecting...")
-        this.connectSocket();
-      }
-    }
-  },
-
   mounted() {
     this.retrievePlayerInfo().catch((error) => {
       console.error(error)
     }).finally(() => {
       this.playerInfoReady = true
+      this.subscribePlayerInfo();
     });
-
-    this.connectSocket();
   },
 
-  destroyed() {
-    if (this.playerInfoSubscription && this.playerInfoSubscription.isConnected) {
-      this.playerInfoSubscription.disconnect();
-    }
+  unmounted() {
+    console.log("Unsubscribing from player info...")
+    this.playerInfoSubscription.unsubscribe();
   },
 
   methods: {
-    connectSocket() {
-      this.$stomp.connect( {}, frame => {
-          this.socketReady = true;
-          console.log(`Connecting to user information ${this.playerInfo.playerName}'s queue.`)
-          this.playerInfoSubscription = this.$stomp.subscribe(`/user/${this.playerInfo.name}/userInfo`, tick => {
-            console.log("Retrieved user info update!");
-            mutations.setPlayerInfo(JSON.parse(tick.body));
-          });
-        },
-        error => {
-          console.error(error);
-          this.socketReady = false;
-        }
-      )
+    subscribePlayerInfo() {
+      console.log(`Connecting to user information ${this.playerInfo.playerName}'s queue.`)
+      this.playerInfoSubscription = this.$stomp.subscribe(`/user/${this.playerInfo.name}/userInfo`, message => {
+        console.log("Retrieved user info update: ", message);
+        mutations.setPlayerInfo(JSON.parse(message.body));
+      });
     }
   }
 }
