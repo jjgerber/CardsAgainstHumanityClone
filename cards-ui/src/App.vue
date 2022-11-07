@@ -35,8 +35,9 @@
     <v-footer app>
       <v-btn
         class="mr-2"
-        x-small
+        size="small"
         icon
+        variant="plain"
         href="https://github.com/jjgerber/CardsAgainstHumanityClone"
         target="_blank"
       >
