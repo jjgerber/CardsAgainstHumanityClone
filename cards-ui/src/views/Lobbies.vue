@@ -71,6 +71,7 @@
 
 <script>
   import GameActions from '@/composition/GameActions.js';
+  import {store} from "@/store";
 
   export default {
     name: 'HelloWorld',
@@ -109,19 +110,35 @@
           const gameName = game.name.toLowerCase();
           return gameName.indexOf(searchTerm) > -1;
         })
+      },
+
+      socketConnectionTime() {
+        return store.state.socketConnectionTime;
+      }
+    },
+
+    watch: {
+      socketConnectionTime() {
+        this.connect();
       }
     },
 
     mounted () {
-      this.connect();
       this.callGetAllLobbies().then((response) => {
         this.games = response.data;
       })
+
+      // If the socket is connected (socketConnectionTime not null) and we aren't subscribed yet, do so.
+      if (this.socketConnectionTime && !this.stompSubscription) {
+        this.connect();
+      }
     },
 
     unmounted() {
-      console.log("Unsubscribing from lobby topic.");
-      this.stompSubscription.unsubscribe();
+      if (this.stompSubscription) {
+        console.log("Unsubscribing from lobby topic.");
+        this.stompSubscription.unsubscribe();
+      }
     },
 
     methods: {

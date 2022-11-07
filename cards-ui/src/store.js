@@ -3,7 +3,9 @@ import { reactive } from 'vue'
 export const store = reactive({
   state: {
     playerInfo: null,
-    game: null
+    game: null,
+    games: [],
+    socketConnectionTime: null
   }
 })
 
@@ -16,11 +18,7 @@ export const mutations = {
     store.state['game'] = game;
   },
 
-  setTimer(timer) {
-    store.state['timer'] = timer;
-  },
-
-  setTimerStart(timerStart) {
-    store.state['timerStart'] = timerStart;
+  setSocketConnectionTime(connectionTime) {
+    store.state['socketConnectionTime'] = connectionTime;
   }
 }

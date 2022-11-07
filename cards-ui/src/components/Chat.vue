@@ -50,6 +50,7 @@
 
 <script>
   import moment from "moment";
+  import { store } from "@/store";
 
   export default {
     name: 'Chat',
@@ -65,11 +66,23 @@
     computed: {
       gameName () {
         return this.$route.params.name;
+      },
+
+      socketConnectionTime() {
+        return store.state.socketConnectionTime;
+      }
+    },
+
+    watch: {
+      socketConnectionTime() {
+        this.connect();
       }
     },
 
     mounted() {
-      this.connect();
+      if (this.socketConnectionTime && !this.chatSubscription) {
+        this.connect();
+      }
     },
 
     unmounted() {
@@ -81,6 +94,7 @@
 
     methods: {
       connect() {
+        console.log(`Subscribing to game ${this.gameName}'s chat.`);
         this.chatSubscription = this.$stomp.subscribe('/topic/chat/' + this.gameName, tick => {
           this.chatMessages.push(JSON.parse(tick.body));
           this.$nextTick(() => {

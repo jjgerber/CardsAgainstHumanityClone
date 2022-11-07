@@ -39,7 +39,6 @@ export default function gameData() {
   });
 
   const gameStateFormatted = computed(() => {
-    console.log("Game State: ", game.value);
     return game.value ? game.value.gameState.replace('_', ' ').toLowerCase() : '';
   });
 

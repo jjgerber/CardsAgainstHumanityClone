@@ -1,6 +1,7 @@
 import { createApp } from 'vue';
 import SockJS from "sockjs-client/dist/sockjs"
 import { Client } from '@stomp/stompjs';
+import { mutations} from '@/store';
 
 import App from './App.vue';
 import router from './router';
@@ -44,8 +45,9 @@ client.onConnect = function (frame) {
   // Do something, all subscribes must be done is this callback
   // This is needed because this will be executed after a (re)connect
   console.log("WebSocket Connected!");
-  router.isReady().then(() => {
-    app.mount('#app');
-  });
+  mutations.setSocketConnectionTime(Date.now());
 };
 
+router.isReady().then(() => {
+  app.mount('#app');
+});

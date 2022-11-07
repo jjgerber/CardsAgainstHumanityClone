@@ -439,6 +439,10 @@
 
       gameName () {
         return this.$route.params.name;
+      },
+
+      socketConnectionTime() {
+        return store.state.socketConnectionTime;
       }
     },
 
@@ -472,17 +476,26 @@
         if (!this.isStateJudging) {
           this.judgeSelection = null;
         }
+      },
+
+      socketConnectionTime() {
+        this.connect();
       }
     },
 
     mounted() {
       this.getGameData();
-      this.connect();
+
+      if (this.socketConnectionTime && !this.gameSubscription) {
+        this.connect();
+      }
     },
 
     unmounted() {
-      console.log(`Unsubscribing from game subscription.`)
-      this.gameSubscription.unsubscribe();
+      if (this.gameSubscription) {
+        console.log(`Unsubscribing from game ${this.gameName}'s topic.`)
+        this.gameSubscription.unsubscribe();
+      }
 
       clearInterval(this.timer);
       this.game = null;
@@ -493,9 +506,7 @@
     methods: {
       getGameData () {
         this.callGetGame(this.gameName).then((game) => {
-          console.log("Setting Game: ", game);
           this.game = game;
-          console.log("Store Game: ", store.state.game);
         }).catch((error) => {
           this.$router.push('/');
         });
@@ -558,7 +569,7 @@
       },
 
       connect() {
-        console.log(`Connecting to game ${this.gameName}'s topic.`)
+        console.log(`Subscribing to game ${this.gameName}'s topic.`)
         this.gameSubscription = this.$stomp.subscribe('/topic/game/' + this.gameName, tick => {
           this.game = JSON.parse(tick.body);
         });

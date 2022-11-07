@@ -50,7 +50,7 @@
 import SetNameDialog from './components/dialogs/SetNameDialog.vue';
 import PlayerData from '@/composition/PlayerData.js';
 import PlayerActions from '@/composition/PlayerActions.js';
-import { mutations } from './store.js';
+import {mutations, store} from './store.js';
 
 export default {
   name: 'App',
@@ -77,6 +77,16 @@ export default {
   computed: {
     currentYear() {
       return new Date().getFullYear();
+    },
+
+    socketConnectionTime() {
+      return store.state.socketConnectionTime;
+    }
+  },
+
+  watch: {
+    socketConnectionTime() {
+      this.subscribePlayerInfo();
     }
   },
 
@@ -85,20 +95,23 @@ export default {
       console.error(error)
     }).finally(() => {
       this.playerInfoReady = true
-      this.subscribePlayerInfo();
+      if (this.socketConnectionTime && !this.playerInfoSubscription) {
+        this.subscribePlayerInfo();
+      }
     });
   },
 
   unmounted() {
-    console.log("Unsubscribing from player info...")
-    this.playerInfoSubscription.unsubscribe();
+    if (this.playerInfoSubscription) {
+      console.log("Unsubscribing from player info...")
+      this.playerInfoSubscription.unsubscribe();
+    }
   },
 
   methods: {
     subscribePlayerInfo() {
-      console.log(`Connecting to user information ${this.playerInfo.playerName}'s queue.`)
+      console.log(`Subscribing to player information ${this.playerInfo.playerName}'s topic.`)
       this.playerInfoSubscription = this.$stomp.subscribe(`/user/${this.playerInfo.name}/userInfo`, message => {
-        console.log("Retrieved user info update: ", message);
         mutations.setPlayerInfo(JSON.parse(message.body));
       });
     }
