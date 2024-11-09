@@ -2,7 +2,7 @@ package org.j3y.cards.model;
 
 import com.fasterxml.jackson.annotation.JsonView;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.util.HashSet;
 import java.util.Set;
 

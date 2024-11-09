@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.j3y.cards.exception.CardsException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -22,7 +23,7 @@ public class ControllerExceptionHandler extends ResponseEntityExceptionHandler {
             HttpStatusCodeException ex, WebRequest request) {
         ObjectNode responseJson = JsonNodeFactory.instance.objectNode();
         responseJson.put("error", ex.getStatusText());
-        responseJson.put("code", ex.getRawStatusCode());
+        responseJson.put("code", ex.getStatusCode().value());
         return handleExceptionInternal(ex, responseJson, new HttpHeaders(), ex.getStatusCode(), request);
     }
 
@@ -39,8 +40,9 @@ public class ControllerExceptionHandler extends ResponseEntityExceptionHandler {
     protected ResponseEntity<Object> handleMethodArgumentNotValid(
             MethodArgumentNotValidException ex,
             HttpHeaders headers,
-            HttpStatus status,
-            WebRequest request) {
+            HttpStatusCode status,
+            WebRequest request
+    ) {
         BindingResult bindingResult = ex.getBindingResult();
 
         StringBuilder errorMsg = new StringBuilder();
@@ -52,5 +54,4 @@ public class ControllerExceptionHandler extends ResponseEntityExceptionHandler {
 
         return handleExceptionInternal(ex, responseJson, new HttpHeaders(), HttpStatus.BAD_REQUEST, request);
     }
-
 }
