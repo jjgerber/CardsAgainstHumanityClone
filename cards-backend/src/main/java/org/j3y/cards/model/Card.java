@@ -3,7 +3,7 @@ package org.j3y.cards.model;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonView;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 
 @Entity
 public class Card {

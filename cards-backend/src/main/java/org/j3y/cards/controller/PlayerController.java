@@ -10,8 +10,8 @@ import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriUtils;
 
-import javax.servlet.http.Cookie;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletResponse;
 import java.nio.charset.StandardCharsets;
 
 @RestController
@@ -47,7 +47,6 @@ public class PlayerController extends BaseController {
         nameCookie.setMaxAge(365 * 24 * 60 * 60); // set name cookie for a year.
         nameCookie.setPath("/");
         nameCookie.setHttpOnly(true);
-        nameCookie.setVersion(1);
         response.addCookie(nameCookie);
 
 
