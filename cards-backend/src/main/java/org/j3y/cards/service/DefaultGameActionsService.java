@@ -36,7 +36,7 @@ public class DefaultGameActionsService implements GameActionsService {
     }
 
     @Override
-    public Game createGame(String name, Player owner, GameConfig gameConfig) throws InterruptedException {
+    public Game createGame(String name, Player owner, GameConfig gameConfig) {
         try {
             owner.getMutex().acquire();
 
@@ -73,13 +73,15 @@ public class DefaultGameActionsService implements GameActionsService {
             gameWebsocketService.sendPlayerUpdate(owner);
 
             return game;
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
         } finally {
             owner.getMutex().release();
         }
     }
 
     @Override
-    public Game startGame(Game game, Player requestingPlayer) throws InterruptedException {
+    public Game startGame(Game game, Player requestingPlayer) {
         try {
             game.getMutex().acquire(); // Lock game for state modifications.
 
@@ -103,6 +105,8 @@ public class DefaultGameActionsService implements GameActionsService {
             manageAllPlayersPhrases(game);
 
             gameWebsocketService.sendGameChatMessage(game, "Game has started!");
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
         } finally {
             game.getMutex().release(); // Release lock.
         }
@@ -115,7 +119,7 @@ public class DefaultGameActionsService implements GameActionsService {
     }
 
     @Override
-    public Game pickPhrasesForCard(Game game, List<String> selectedPhraseIds, Player selectingPlayer) throws InterruptedException {
+    public Game pickPhrasesForCard(Game game, List<String> selectedPhraseIds, Player selectingPlayer) {
         try {
             game.getMutex().acquire(); // Lock game for state modifications.
             selectingPlayer.getMutex().acquire();
@@ -160,12 +164,14 @@ public class DefaultGameActionsService implements GameActionsService {
 
             game.getPhraseSelections().add(phraseSelections);
             game.getPlayersWhoHaveChosen().add(selectingPlayer);
-            selectingPlayer.getPhrases().removeAll(phraseSelections);
+            phraseSelections.forEach(selectingPlayer.getPhrases()::remove);
             selectingPlayer.setMissedTurns(0);
 
             gameWebsocketService.sendGameUpdate(game);
             gameWebsocketService.sendPlayerUpdate(selectingPlayer);
 
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
         } finally {
             selectingPlayer.getMutex().release();
             game.getMutex().release(); // Release lock.
@@ -180,7 +186,7 @@ public class DefaultGameActionsService implements GameActionsService {
     }
 
     @Override
-    public Game vote(Game game, Player votingPlayer, Integer voteIndex) throws InterruptedException {
+    public Game vote(Game game, Player votingPlayer, Integer voteIndex) {
         try {
             game.getMutex().acquire(); // Lock game for state modifications.
 
@@ -201,6 +207,8 @@ public class DefaultGameActionsService implements GameActionsService {
 
             logger.info("Last Winning Player: {}", game.getLastWinningPlayer());
             logger.info("Winning Phrase: {}", game.getPhraseSelections().get(voteIndex));
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
         } finally {
             game.getMutex().release();
         }
@@ -211,7 +219,7 @@ public class DefaultGameActionsService implements GameActionsService {
     }
 
     @Override
-    public Game joinGame(Game game, Player joiningPlayer) throws InterruptedException {
+    public Game joinGame(Game game, Player joiningPlayer) {
         try {
             game.getMutex().acquire(); // Lock game for state modifications.
             joiningPlayer.getMutex().acquire(); // Lock player for state modifications.
@@ -247,6 +255,8 @@ public class DefaultGameActionsService implements GameActionsService {
 
             gameWebsocketService.sendGameChatMessage(game, joiningPlayer.getPlayerName() + " has joined the game.");
 
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
         } finally {
             joiningPlayer.getMutex().release();
             game.getMutex().release();
@@ -256,7 +266,7 @@ public class DefaultGameActionsService implements GameActionsService {
     }
 
     @Override
-    public Game leaveGame(Game game, Player leavingPlayer, boolean sendGameUpdate) throws InterruptedException {
+    public Game leaveGame(Game game, Player leavingPlayer, boolean sendGameUpdate) {
         boolean isLastPlayerInGame;
 
         try {
@@ -313,6 +323,8 @@ public class DefaultGameActionsService implements GameActionsService {
             gameWebsocketService.sendLobbiesUpdate();
             gameWebsocketService.sendPlayerUpdate(leavingPlayer);
 
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
         } finally {
             leavingPlayer.getMutex().release();
             game.getMutex().release();
@@ -322,7 +334,7 @@ public class DefaultGameActionsService implements GameActionsService {
     }
 
     @Override
-    public Game updateGame(Game game, Player updatingPlayer, GameConfig newGameConfig) throws InterruptedException {
+    public Game updateGame(Game game, Player updatingPlayer, GameConfig newGameConfig) {
         try {
             game.getMutex().acquire();
 
@@ -340,6 +352,8 @@ public class DefaultGameActionsService implements GameActionsService {
 
             gameWebsocketService.sendLobbiesUpdate();
             gameWebsocketService.sendGameUpdate(game);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
         } finally {
             game.getMutex().release();
         }
@@ -380,7 +394,6 @@ public class DefaultGameActionsService implements GameActionsService {
 
     /**
      * Ensure a player has 10 phrases. Clear out any selected phrases.
-     *
      * This method assumes the game and player have already been mutexed. BE CAREFUL!
      *
      * @param player Player to manage the cards of.

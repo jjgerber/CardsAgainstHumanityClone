@@ -1,18 +1,13 @@
 package org.j3y.cards.service;
 
 import org.j3y.cards.model.Game;
-import org.springframework.scheduling.annotation.Async;
 
 public interface GameStateTimeoutService {
-    @Async
-    void setChoosingTimeout(Game game) throws InterruptedException;
+    void setChoosingTimeout(Game game);
 
-    @Async
-    void setJudgingTimeout(Game game) throws InterruptedException;
+    void setJudgingTimeout(Game game);
 
-    @Async
-    void setDoneJudgingTimeout(Game game) throws InterruptedException;
+    void setDoneJudgingTimeout(Game game);
 
-    @Async
-    void setGameOverTimeout(Game game) throws InterruptedException;
+    void setGameOverTimeout(Game game);
 }
