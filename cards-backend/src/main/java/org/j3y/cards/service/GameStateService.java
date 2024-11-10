@@ -4,11 +4,11 @@ import org.j3y.cards.model.Game;
 
 public interface GameStateService {
 
-    void setStateChoosing(Game game) throws InterruptedException;
-    void setStateDoneChoosing(Game game) throws InterruptedException;
-    void setStateJudging(Game game) throws InterruptedException;
-    void setStateDoneJudging(Game game) throws InterruptedException;
-    void setStateGameOver(Game game) throws InterruptedException;
-    void setStateLobby(Game game) throws InterruptedException;
+    void setStateChoosing(Game game);
+    void setStateDoneChoosing(Game game);
+    void setStateJudging(Game game);
+    void setStateDoneJudging(Game game);
+    void setStateGameOver(Game game);
+    void setStateLobby(Game game);
 
 }

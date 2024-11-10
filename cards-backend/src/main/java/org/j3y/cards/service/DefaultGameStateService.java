@@ -13,7 +13,6 @@ import org.springframework.stereotype.Service;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 public class DefaultGameStateService implements GameStateService {
@@ -36,7 +35,7 @@ public class DefaultGameStateService implements GameStateService {
     }
 
     @Override
-    public void setStateChoosing(Game game) throws InterruptedException {
+    public void setStateChoosing(Game game) {
         // Kick all inactives
         kickInactives(game);
         if (game.getGameState() == GameState.ABANDONED) {
@@ -74,6 +73,8 @@ public class DefaultGameStateService implements GameStateService {
 
             // Give players more cards if they need them.
            gameActionsService.manageAllPlayersPhrases(game);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
         } finally {
             game.getMutex().release();
         }
@@ -81,10 +82,10 @@ public class DefaultGameStateService implements GameStateService {
         gameStateTimeoutService.setChoosingTimeout(game);
     }
 
-    private void kickInactives(Game game) throws InterruptedException {
+    private void kickInactives(Game game) {
         List<Player> inactivePlayers = game.getPlayers().stream()
                 .filter(player -> player.getMissedTurns() >= 3)
-                .collect(Collectors.toList());
+                .toList();
 
         for (Player inactivePlayer : inactivePlayers) {
             gameActionsService.leaveGame(game, inactivePlayer, false);
@@ -93,7 +94,7 @@ public class DefaultGameStateService implements GameStateService {
     }
 
     @Override
-    public void setStateDoneChoosing(Game game) throws InterruptedException {
+    public void setStateDoneChoosing(Game game) {
         try {
             game.getMutex().acquire();
             game.setGameState(GameState.DONE_CHOOSING);
@@ -102,6 +103,8 @@ public class DefaultGameStateService implements GameStateService {
             game.getPlayers().stream()
                     .filter(player -> !game.getPlayersWhoHaveChosen().contains(player) && !player.equals(game.getJudgingPlayer()))
                     .forEach(Player::incrementMissedTurns);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
         } finally {
             game.getMutex().release();
         }
@@ -110,7 +113,7 @@ public class DefaultGameStateService implements GameStateService {
     }
 
     @Override
-    public void setStateJudging(Game game) throws InterruptedException {
+    public void setStateJudging(Game game) {
 
         boolean hasNoSelections = false;
         try {
@@ -124,6 +127,8 @@ public class DefaultGameStateService implements GameStateService {
                 // Shuffle the selections.
                 Collections.shuffle(game.getPhraseSelections());
             }
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
         } finally {
             game.getMutex().release();
         }
@@ -137,7 +142,7 @@ public class DefaultGameStateService implements GameStateService {
     }
 
     @Override
-    public void setStateDoneJudging(Game game) throws InterruptedException {
+    public void setStateDoneJudging(Game game) {
         try {
             game.getMutex().acquire();
 
@@ -180,6 +185,8 @@ public class DefaultGameStateService implements GameStateService {
                 }
             }
 
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
         } finally {
             game.getMutex().release();
         }
@@ -189,7 +196,7 @@ public class DefaultGameStateService implements GameStateService {
     }
 
     @Override
-    public void setStateGameOver(Game game) throws InterruptedException {
+    public void setStateGameOver(Game game) {
         try {
             game.getMutex().acquire();
 
@@ -199,6 +206,8 @@ public class DefaultGameStateService implements GameStateService {
             game.setJudgeChoiceWinner(null);
             game.setCurrentCard(null);
 
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
         } finally {
             game.getMutex().release();
         }
@@ -208,7 +217,7 @@ public class DefaultGameStateService implements GameStateService {
     }
 
     @Override
-    public void setStateLobby(Game game) throws InterruptedException {
+    public void setStateLobby(Game game) {
         try {
             game.getMutex().acquire();
 
@@ -226,6 +235,8 @@ public class DefaultGameStateService implements GameStateService {
 
             gameWebsocketService.sendGameUpdate(game);
             gameWebsocketService.sendLobbiesUpdate();
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
         } finally {
             game.getMutex().release();
         }
